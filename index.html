@@ -418,7 +418,7 @@
         </div>
         <div id="pin-error" style="color:var(--red);font-size:13px;margin-bottom:8px;display:none">❌ Incorrect PIN</div>
         <button class="btn btn-primary" onclick="checkPin()">UNLOCK →</button>
-        <p style="font-size:12px;color:var(--muted);margin-top:12px;text-align:center">Default PIN: <strong style="color:var(--accent)">1234</strong> — change before going live!</p>
+        <p style="font-size:12px;color:var(--muted);margin-top:12px;text-align:center">Default PIN: <strong style="color:var(--accent)">0808</strong> — change before going live!</p>
       </div>
     </div>
     <div id="principal-panel" style="display:none">
@@ -469,18 +469,7 @@ function getParam(key) {
   return new URLSearchParams(window.location.search).get(key) || '';
 }
 
-function getExpectedToken() {
-  // Token changes every 5 minutes using a proper hash
-  const block = Math.floor(Date.now() / (5 * 60 * 1000));
-  // Simple hash function that produces very different results for each block
-  let hash = 0;
-  const str = "ASKBOARD" + String(block);
-  for (let i = 0; i < str.length; i++) {
-    hash = ((hash << 5) - hash) + str.charCodeAt(i);
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  return Math.abs(hash).toString(16).toUpperCase().padStart(8,'0').substring(0,8);
-}
+// Token now managed by Firebase — see getExpectedTokenFromFirebase()
 
 function router() {
   const mode  = getParam('mode');
@@ -494,14 +483,18 @@ function router() {
   }
 
   if (token) {
-    // Student came via QR scan — validate token
-    if (token === getExpectedToken()) {
-      showPage('app');
-    } else {
-      showPage('blocked');
-      document.getElementById('block-reason').textContent =
-        'This QR code has expired. Please go to the office and scan the current QR code on screen.';
-    }
+    // Student came via QR scan — validate token against Firebase
+    showPage('blocked');
+    document.getElementById('block-reason').textContent = 'Verifying your QR code...';
+    getExpectedTokenFromFirebase().then(expected => {
+      if (token === expected) {
+        showPage('app');
+      } else {
+        showPage('blocked');
+        document.getElementById('block-reason').textContent =
+          'This QR code has expired. Please go to the office and scan the current QR code on screen.';
+      }
+    });
     return;
   }
 
@@ -521,34 +514,25 @@ function showPage(name) {
 }
 
 // ═══════════════════════════════════════════
-//  OFFICE QR DISPLAY
+//  OFFICE QR DISPLAY — Firebase powered
 // ═══════════════════════════════════════════
 const TOKEN_DURATION = 5 * 60;
 let currentToken = '';
 
-function getOfficeToken() {
-  return getExpectedToken();
+// Generate a truly random token
+function makeToken() {
+  return Math.random().toString(36).substring(2,10).toUpperCase();
 }
 
 function getSecondsLeft() {
-  const now  = new Date();
-  const secs = now.getMinutes() * 60 + now.getSeconds();
-  return TOKEN_DURATION - (secs % TOKEN_DURATION);
-}
-
-function initOfficeQR() {
-  currentToken = getOfficeToken();
-  generateQR(currentToken);
-  setInterval(updateOfficeTimer, 1000);
-  updateOfficeTimer();
-  // Reload page every 5 minutes — guaranteed new QR
-  const msUntilNextBlock = (5 * 60 * 1000) - (Date.now() % (5 * 60 * 1000));
-  setTimeout(() => location.reload(), msUntilNextBlock);
+  const now = Date.now();
+  const blockMs = 5 * 60 * 1000;
+  return Math.ceil((blockMs - (now % blockMs)) / 1000);
 }
 
 function generateQR(token) {
-  const base    = window.location.href.split('?')[0];
-  const url     = `${base}?token=${token}`;
+  const base = window.location.href.split('?')[0];
+  const url  = `${base}?token=${token}`;
   const wrapper = document.getElementById('qr-wrapper');
   wrapper.classList.add('refreshing');
   setTimeout(() => {
@@ -564,25 +548,55 @@ function generateQR(token) {
 }
 
 function updateOfficeTimer() {
-  // Calculate seconds left in current 5-min block
-  const now = Date.now();
-  const blockMs = 5 * 60 * 1000;
-  const secsLeft = Math.ceil((blockMs - (now % blockMs)) / 1000);
-  const token = getExpectedToken();
+  const secsLeft = getSecondsLeft();
   const mins = Math.floor(secsLeft / 60);
   const secs = secsLeft % 60;
   const pct  = (secsLeft / TOKEN_DURATION) * 100;
-
   document.getElementById('timer-count').textContent = `${mins}:${String(secs).padStart(2,'0')}`;
   const bar = document.getElementById('timer-bar');
   bar.style.width = pct + '%';
   bar.classList.toggle('urgent', secsLeft <= 30);
+}
 
-  // Regenerate QR whenever token changes
-  if (token !== currentToken) {
-    currentToken = token;
-    generateQR(token);
-  }
+async function initOfficeQR() {
+  const db = firebase.firestore();
+  const tokenRef = db.collection('config').doc('qrtoken');
+
+  // Generate first token immediately
+  const firstToken = makeToken();
+  await tokenRef.set({ token: firstToken, updatedAt: Date.now() });
+  currentToken = firstToken;
+  generateQR(firstToken);
+
+  // Listen for token changes from Firebase
+  tokenRef.onSnapshot(snap => {
+    if (!snap.exists) return;
+    const t = snap.data().token;
+    if (t && t !== currentToken) {
+      currentToken = t;
+      generateQR(t);
+    }
+  });
+
+  // Update timer every second
+  setInterval(updateOfficeTimer, 1000);
+  updateOfficeTimer();
+
+  // Rotate token every 5 minutes via Firebase
+  setInterval(async () => {
+    const newToken = makeToken();
+    await tokenRef.set({ token: newToken, updatedAt: Date.now() });
+  }, 5 * 60 * 1000);
+}
+
+// Student token validation — reads from Firebase
+async function getExpectedTokenFromFirebase() {
+  try {
+    const db = firebase.firestore();
+    const snap = await db.collection('config').doc('qrtoken').get();
+    if (snap.exists) return snap.data().token;
+  } catch(e) {}
+  return null;
 }
 
 // ═══════════════════════════════════════════
@@ -698,7 +712,7 @@ function resetStudent() {
 
 function checkPin() {
   const pin = document.getElementById('pin-input').value;
-  if (pin === '1234') {
+  if (pin === '0808') {
     document.getElementById('pin-gate').style.display       = 'none';
     document.getElementById('principal-panel').style.display = 'block';
     renderRequests();
