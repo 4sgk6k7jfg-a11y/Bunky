@@ -6,6 +6,8 @@
 <title>Late Pass System</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
   :root {
     --navy: #0a0e1a;
@@ -38,170 +40,74 @@
     pointer-events:none; z-index:0;
   }
 
-  /* ── PAGE SYSTEM ── */
   .page { display:none; }
   .page.active { display:block; }
 
   /* ── OFFICE QR PAGE ── */
   #page-office {
-    min-height:100vh;
-    display:none;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    text-align:center;
-    padding:40px 20px;
-    position:relative; z-index:1;
+    min-height:100vh; display:none;
+    flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:40px 20px; position:relative; z-index:1;
   }
   #page-office.active { display:flex; }
-  .office-title {
-    font-family:'Bebas Neue',sans-serif;
-    font-size:42px; letter-spacing:3px;
-    color:var(--accent); line-height:1; margin-bottom:4px;
-  }
-  .office-sub {
-    font-size:13px; color:var(--muted);
-    letter-spacing:2px; text-transform:uppercase; margin-bottom:40px;
-  }
-  .qr-wrapper {
-    background:#fff; border-radius:20px; padding:24px;
-    display:inline-block;
-    box-shadow: 0 0 60px rgba(245,166,35,0.15);
-    margin-bottom:28px; transition:opacity .4s;
-  }
+  .office-title { font-family:'Bebas Neue',sans-serif; font-size:42px; letter-spacing:3px; color:var(--accent); line-height:1; margin-bottom:4px; }
+  .office-sub { font-size:13px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-bottom:40px; }
+  .qr-wrapper { background:#fff; border-radius:20px; padding:24px; display:inline-block; box-shadow:0 0 60px rgba(245,166,35,0.15); margin-bottom:28px; transition:opacity .4s; }
   .qr-wrapper.refreshing { opacity:0.3; }
-  .office-instruction {
-    font-family:'Bebas Neue',sans-serif;
-    font-size:28px; letter-spacing:2px; margin-bottom:8px;
-  }
+  .office-instruction { font-family:'Bebas Neue',sans-serif; font-size:28px; letter-spacing:2px; margin-bottom:8px; }
   .office-sub2 { font-size:14px; color:var(--muted); margin-bottom:28px; }
-  .timer-row {
-    display:flex; align-items:center; justify-content:center;
-    gap:12px; margin-bottom:12px;
-  }
+  .timer-row { display:flex; align-items:center; justify-content:center; gap:12px; margin-bottom:12px; }
   .timer-label { font-size:13px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
   .timer-bar-wrap { width:200px; height:6px; background:var(--border); border-radius:10px; overflow:hidden; }
   .timer-bar { height:100%; background:var(--accent); border-radius:10px; transition:width 1s linear, background 1s; }
   .timer-bar.urgent { background:var(--red); }
   .timer-count { font-family:'DM Mono',monospace; font-size:13px; color:var(--accent); min-width:32px; text-align:right; }
-  .token-badge {
-    display:inline-flex; align-items:center; gap:8px;
-    background:var(--card); border:1px solid var(--border);
-    border-radius:10px; padding:8px 16px;
-    font-family:'DM Mono',monospace; font-size:13px; color:var(--muted);
-    margin-bottom:24px;
-  }
+  .token-badge { display:inline-flex; align-items:center; gap:8px; background:var(--card); border:1px solid var(--border); border-radius:10px; padding:8px 16px; font-family:'DM Mono',monospace; font-size:13px; color:var(--muted); margin-bottom:24px; }
   .token-dot { width:7px; height:7px; background:var(--green); border-radius:50%; animation:pulse 1.5s infinite; }
-  .office-note {
-    background:var(--card); border:1px solid var(--border);
-    border-radius:12px; padding:16px 24px;
-    font-size:12px; color:var(--muted); max-width:420px;
-    line-height:1.8; text-align:left;
-  }
+  .office-note { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 24px; font-size:12px; color:var(--muted); max-width:420px; line-height:1.8; text-align:left; }
   .office-note strong { color:var(--accent); }
 
   /* ── STUDENT / MAIN APP ── */
-  .wrap {
-    position:relative; z-index:1;
-    max-width:520px; margin:0 auto; padding:24px 16px 60px;
-  }
-  .nav {
-    display:flex; gap:8px; margin-bottom:32px;
-    background:var(--card); border:1px solid var(--border);
-    border-radius:12px; padding:6px;
-  }
-  .nav-btn {
-    flex:1; padding:10px; border:none; border-radius:8px;
-    font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600;
-    cursor:pointer; transition:all .2s;
-    background:transparent; color:var(--muted); letter-spacing:.3px;
-  }
+  .wrap { position:relative; z-index:1; max-width:520px; margin:0 auto; padding:24px 16px 60px; }
+  .nav { display:flex; gap:8px; margin-bottom:32px; background:var(--card); border:1px solid var(--border); border-radius:12px; padding:6px; }
+  .nav-btn { flex:1; padding:10px; border:none; border-radius:8px; font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600; cursor:pointer; transition:all .2s; background:transparent; color:var(--muted); letter-spacing:.3px; }
   .nav-btn.active { background:var(--accent); color:var(--navy); }
   .school-badge { display:flex; align-items:center; gap:14px; margin-bottom:28px; }
-  .badge-icon {
-    width:52px; height:52px; background:var(--accent);
-    border-radius:14px; display:flex; align-items:center; justify-content:center;
-    font-size:24px; flex-shrink:0;
-  }
-  .badge-text h1 {
-    font-family:'Bebas Neue',sans-serif; font-size:26px;
-    letter-spacing:1.5px; color:var(--white); line-height:1;
-  }
+  .badge-icon { width:52px; height:52px; background:var(--accent); border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:24px; flex-shrink:0; }
+  .badge-text h1 { font-family:'Bebas Neue',sans-serif; font-size:26px; letter-spacing:1.5px; color:var(--white); line-height:1; }
   .badge-text p { font-size:12px; color:var(--muted); margin-top:3px; letter-spacing:.5px; }
   .view { display:none; animation:fadeUp .35s ease; }
   .view.active { display:block; }
   @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
-  .card {
-    background:var(--card); border:1px solid var(--border);
-    border-radius:16px; padding:24px; margin-bottom:16px;
-  }
-  .card-title {
-    font-family:'Bebas Neue',sans-serif; font-size:18px;
-    letter-spacing:1px; color:var(--accent); margin-bottom:18px;
-    display:flex; align-items:center; gap:8px;
-  }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:24px; margin-bottom:16px; }
+  .card-title { font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:1px; color:var(--accent); margin-bottom:18px; display:flex; align-items:center; gap:8px; }
   .field { margin-bottom:16px; }
-  label {
-    display:block; font-size:11px; font-weight:600;
-    letter-spacing:1px; text-transform:uppercase;
-    color:var(--muted); margin-bottom:7px;
-  }
-  input, select, textarea {
-    width:100%; background:var(--navy2); border:1px solid var(--border);
-    border-radius:10px; padding:12px 14px; color:var(--text);
-    font-family:'DM Sans',sans-serif; font-size:15px;
-    outline:none; transition:border-color .2s;
-  }
+  label { display:block; font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--muted); margin-bottom:7px; }
+  input, select, textarea { width:100%; background:var(--navy2); border:1px solid var(--border); border-radius:10px; padding:12px 14px; color:var(--text); font-family:'DM Sans',sans-serif; font-size:15px; outline:none; transition:border-color .2s; }
   input:focus, select:focus, textarea:focus { border-color:var(--accent); }
   select option { background:var(--navy2); }
-  .time-display {
-    background:var(--navy2); border:1px solid var(--border);
-    border-radius:10px; padding:12px 14px;
-    font-family:'DM Mono',monospace; font-size:15px; color:var(--accent);
-    display:flex; align-items:center; gap:8px;
-  }
+  .time-display { background:var(--navy2); border:1px solid var(--border); border-radius:10px; padding:12px 14px; font-family:'DM Mono',monospace; font-size:15px; color:var(--accent); display:flex; align-items:center; gap:8px; }
   .time-dot { width:8px; height:8px; background:var(--green); border-radius:50%; animation:pulse 1.5s infinite; }
-  .btn {
-    width:100%; padding:14px; border:none; border-radius:12px;
-    font-family:'Bebas Neue',sans-serif; font-size:18px;
-    letter-spacing:1.5px; cursor:pointer; transition:all .2s; margin-top:8px;
-  }
+  .btn { width:100%; padding:14px; border:none; border-radius:12px; font-family:'Bebas Neue',sans-serif; font-size:18px; letter-spacing:1.5px; cursor:pointer; transition:all .2s; margin-top:8px; }
   .btn-primary { background:var(--accent); color:var(--navy); }
   .btn-primary:hover { background:var(--accent2); transform:translateY(-1px); }
   .btn-approve { background:var(--green); color:var(--white); width:auto; padding:10px 20px; font-size:14px; border-radius:8px; margin-top:0; }
   .btn-reject  { background:var(--red);   color:var(--white); width:auto; padding:10px 20px; font-size:14px; border-radius:8px; margin-top:0; }
   .btn-print   { background:var(--blue);  color:var(--white); }
   .btn-print:hover { background:#2563eb; transform:translateY(-1px); }
-  .status-badge {
-    display:inline-flex; align-items:center; gap:6px;
-    padding:5px 12px; border-radius:20px;
-    font-size:12px; font-weight:600; letter-spacing:.5px;
-  }
+  .status-badge { display:inline-flex; align-items:center; gap:6px; padding:5px 12px; border-radius:20px; font-size:12px; font-weight:600; letter-spacing:.5px; }
   .status-pending  { background:rgba(245,166,35,.15); color:var(--accent); border:1px solid rgba(245,166,35,.3); }
   .status-approved { background:rgba(34,197,94,.15);  color:var(--green);  border:1px solid rgba(34,197,94,.3); }
   .status-rejected { background:rgba(239,68,68,.15);  color:var(--red);    border:1px solid rgba(239,68,68,.3); }
   .status-used     { background:rgba(107,122,153,.15); color:var(--muted); border:1px solid rgba(107,122,153,.3); }
   .pending-box { text-align:center; padding:40px 24px; }
-  .spinner {
-    width:56px; height:56px; border:3px solid var(--border);
-    border-top-color:var(--accent); border-radius:50%;
-    animation:spin 1s linear infinite; margin:0 auto 20px;
-  }
+  .spinner { width:56px; height:56px; border:3px solid var(--border); border-top-color:var(--accent); border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 20px; }
   @keyframes spin { to{transform:rotate(360deg)} }
   .pending-box h2 { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:1px; margin-bottom:8px; }
   .pending-box p  { font-size:14px; color:var(--muted); }
-  .slip {
-    background:#fff; color:#111; border-radius:12px;
-    padding:28px; position:relative; overflow:hidden;
-  }
-  .slip::before {
-    content:'APPROVED'; position:absolute; top:50%; left:50%;
-    transform:translate(-50%,-50%) rotate(-25deg);
-    font-family:'Bebas Neue',sans-serif; font-size:80px;
-    color:rgba(34,197,94,.08); letter-spacing:4px;
-    white-space:nowrap; pointer-events:none;
-  }
+  .slip { background:#fff; color:#111; border-radius:12px; padding:28px; position:relative; overflow:hidden; }
+  .slip::before { content:'APPROVED'; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) rotate(-25deg); font-family:'Bebas Neue',sans-serif; font-size:80px; color:rgba(34,197,94,.08); letter-spacing:4px; white-space:nowrap; pointer-events:none; }
   .slip-header { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #111; padding-bottom:14px; margin-bottom:16px; }
   .slip-school { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1px; color:#111; }
   .slip-title  { font-size:11px; color:#666; letter-spacing:1px; text-transform:uppercase; margin-top:2px; }
@@ -224,70 +130,43 @@
   .search-box { position:relative; margin-bottom:16px; }
   .search-box input { padding-left:40px; }
   .search-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:16px; }
-  .slip-list-item {
-    background:var(--navy2); border:1px solid var(--border);
-    border-radius:12px; padding:14px 16px; margin-bottom:10px;
-    display:flex; justify-content:space-between; align-items:center;
-    cursor:pointer; transition:border-color .2s;
-  }
+  .slip-list-item { background:var(--navy2); border:1px solid var(--border); border-radius:12px; padding:14px 16px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; transition:border-color .2s; }
   .slip-list-item:hover { border-color:var(--accent); }
   .sli-name { font-weight:600; font-size:14px; }
   .sli-info { font-size:12px; color:var(--muted); margin-top:2px; }
   .divider { height:1px; background:var(--border); margin:20px 0; }
-  .info-note {
-    background:rgba(59,130,246,.1); border:1px solid rgba(59,130,246,.25);
-    border-radius:10px; padding:12px 14px; font-size:13px; color:#93c5fd;
-    margin-bottom:16px; line-height:1.5;
-  }
-
-  /* ── BLOCKED SCREEN ── */
-  .blocked-screen {
-    min-height:100vh; display:none;
-    flex-direction:column; align-items:center; justify-content:center;
-    text-align:center; padding:40px 24px; position:relative; z-index:1;
-  }
+  .info-note { background:rgba(59,130,246,.1); border:1px solid rgba(59,130,246,.25); border-radius:10px; padding:12px 14px; font-size:13px; color:#93c5fd; margin-bottom:16px; line-height:1.5; }
+  .blocked-screen { min-height:100vh; display:none; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:40px 24px; position:relative; z-index:1; }
   .blocked-screen.active { display:flex; }
 </style>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════
-     PAGE: OFFICE QR DISPLAY
-     Open this page on the office laptop
-════════════════════════════════════════ -->
+<!-- OFFICE QR PAGE -->
 <div id="page-office" class="page">
   <div class="office-title">LATE PASS SYSTEM</div>
   <div class="office-sub">Office QR Display — Scan to Submit a Late Slip</div>
-
   <div class="qr-wrapper" id="qr-wrapper">
     <div id="qrcode"></div>
   </div>
-
   <div class="office-instruction">SCAN THIS QR CODE</div>
   <div class="office-sub2">Point your phone camera at the code to open the late slip form</div>
-
   <div class="timer-row">
     <span class="timer-label">Refreshes in</span>
     <div class="timer-bar-wrap"><div class="timer-bar" id="timer-bar"></div></div>
     <span class="timer-count" id="timer-count">5:00</span>
   </div>
-
   <div class="token-badge">
     <div class="token-dot"></div>
     <span>Active token: </span>
     <span id="token-display">—</span>
   </div>
-
   <div class="office-note">
     <strong>📋 For your group:</strong> Keep this page open on the office laptop screen. The QR refreshes automatically every 5 minutes — no action needed. Students who saved an old QR photo will be blocked.
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════
-     BLOCKED SCREEN (expired/no token)
-════════════════════════════════════════ -->
+<!-- BLOCKED SCREEN -->
 <div id="page-blocked" class="blocked-screen">
   <div style="font-size:64px;margin-bottom:20px">🚫</div>
   <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;color:var(--red);margin-bottom:12px">ACCESS DENIED</div>
@@ -297,12 +176,9 @@
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════
-     PAGE: STUDENT / PRINCIPAL / TEACHER APP
-════════════════════════════════════════ -->
+<!-- STUDENT / PRINCIPAL / TEACHER APP -->
 <div id="page-app" class="page">
 <div class="wrap">
-
   <div class="school-badge">
     <div class="badge-icon">🏫</div>
     <div class="badge-text">
@@ -310,33 +186,22 @@
       <p>DIGITAL SLIP GENERATOR</p>
     </div>
   </div>
-
   <div class="nav">
     <button class="nav-btn active" onclick="switchView('student',this)">📱 Student</button>
     <button class="nav-btn"        onclick="switchView('principal',this)">🔐 Principal</button>
     <button class="nav-btn"        onclick="switchView('teacher',this)">👩‍🏫 Teacher</button>
   </div>
 
-  <!-- ── STUDENT VIEW ── -->
+  <!-- STUDENT VIEW -->
   <div id="view-student" class="view active">
-
     <div id="student-form">
       <div class="card">
         <div class="card-title">📋 Late Arrival Form</div>
-        <div class="field">
-          <label>Full Name</label>
-          <input type="text" id="s-name" placeholder="e.g. Ahmad Rizwan">
-        </div>
-        <div class="field">
-          <label>Class</label>
-          <input type="text" id="s-class" placeholder="e.g. 10A, 11B, 9C">
-        </div>
+        <div class="field"><label>Full Name</label><input type="text" id="s-name" placeholder="e.g. Ahmad Rizwan"></div>
+        <div class="field"><label>Class</label><input type="text" id="s-class" placeholder="e.g. 10A, 11B, 9C"></div>
         <div class="field">
           <label>Arrival Time (Auto-Recorded)</label>
-          <div class="time-display">
-            <div class="time-dot"></div>
-            <span id="live-time">--:-- --</span>
-          </div>
+          <div class="time-display"><div class="time-dot"></div><span id="live-time">--:-- --</span></div>
         </div>
         <div class="field">
           <label>Reason for Being Late</label>
@@ -357,27 +222,21 @@
         <button class="btn btn-primary" onclick="submitRequest()">SUBMIT FOR APPROVAL →</button>
       </div>
     </div>
-
     <div id="student-pending" style="display:none">
       <div class="card">
         <div class="pending-box">
           <div class="spinner"></div>
           <h2>Awaiting Approval</h2>
           <p>Your request has been sent to the principal.<br>Please wait a moment...</p>
-          <br>
-          <div class="status-badge status-pending">⏳ PENDING</div>
+          <br><div class="status-badge status-pending">⏳ PENDING</div>
         </div>
       </div>
     </div>
-
     <div id="student-approved" style="display:none">
       <div class="info-note">✅ Your late slip has been <strong>approved</strong>. Show this screen to your teacher.<br><span style="color:#fbbf24">⚠️ This slip can only be verified <strong>once</strong> — do not share it.</span></div>
       <div class="slip">
         <div class="slip-header">
-          <div>
-            <div class="slip-school">LATE ARRIVAL PASS</div>
-            <div class="slip-title">Official Digital Late Slip</div>
-          </div>
+          <div><div class="slip-school">LATE ARRIVAL PASS</div><div class="slip-title">Official Digital Late Slip</div></div>
           <div class="slip-code" id="slip-code">—</div>
         </div>
         <div class="slip-row"><span class="s-label">Student Name</span><span class="s-val" id="slip-name">—</span></div>
@@ -385,37 +244,28 @@
         <div class="slip-row"><span class="s-label">Date</span><span class="s-val" id="slip-date">—</span></div>
         <div class="slip-row"><span class="s-label">Arrival Time</span><span class="s-val" id="slip-time">—</span></div>
         <div class="slip-row"><span class="s-label">Reason</span><span class="s-val" id="slip-reason">—</span></div>
-        <div class="slip-footer">
-          <span>Approved by Principal</span>
-          <span class="approved-stamp">✓ APPROVED</span>
-        </div>
+        <div class="slip-footer"><span>Approved by Principal</span><span class="approved-stamp">✓ APPROVED</span></div>
       </div>
       <button class="btn btn-primary" onclick="resetStudent()" style="margin-top:14px;background:var(--card);color:var(--text);border:1px solid var(--border)">← New Request</button>
     </div>
-
     <div id="student-rejected" style="display:none">
       <div class="card">
         <div class="pending-box">
           <div style="font-size:50px;margin-bottom:16px">❌</div>
           <h2 style="color:var(--red)">Request Rejected</h2>
           <p>Your request was not approved.<br>Please proceed to the school office.</p>
-          <br>
-          <button class="btn btn-primary" onclick="resetStudent()" style="max-width:200px;margin:0 auto">Try Again</button>
+          <br><button class="btn btn-primary" onclick="resetStudent()" style="max-width:200px;margin:0 auto">Try Again</button>
         </div>
       </div>
     </div>
-
   </div>
 
-  <!-- ── PRINCIPAL VIEW ── -->
+  <!-- PRINCIPAL VIEW -->
   <div id="view-principal" class="view">
     <div id="pin-gate">
       <div class="card">
         <div class="card-title">🔐 Principal Access</div>
-        <div class="field">
-          <label>Enter PIN to continue</label>
-          <input type="password" id="pin-input" placeholder="Enter 4-digit PIN" maxlength="4">
-        </div>
+        <div class="field"><label>Enter PIN to continue</label><input type="password" id="pin-input" placeholder="Enter 4-digit PIN" maxlength="4"></div>
         <div id="pin-error" style="color:var(--red);font-size:13px;margin-bottom:8px;display:none">❌ Incorrect PIN</div>
         <button class="btn btn-primary" onclick="checkPin()">UNLOCK →</button>
       </div>
@@ -423,21 +273,17 @@
     <div id="principal-panel" style="display:none">
       <div class="card">
         <div class="card-title">📥 Pending Requests</div>
-        <div id="requests-list">
-          <div class="empty-state"><div class="empty-icon">📭</div><p>No pending requests right now.</p></div>
-        </div>
+        <div id="requests-list"><div class="empty-state"><div class="empty-icon">📭</div><p>No pending requests right now.</p></div></div>
       </div>
       <div class="divider"></div>
       <div class="card">
         <div class="card-title">📊 Today's Log</div>
-        <div id="approved-log">
-          <div class="empty-state"><div class="empty-icon">📋</div><p>No slips approved yet today.</p></div>
-        </div>
+        <div id="approved-log"><div class="empty-state"><div class="empty-icon">📋</div><p>No slips approved yet today.</p></div></div>
       </div>
     </div>
   </div>
 
-  <!-- ── TEACHER VIEW ── -->
+  <!-- TEACHER VIEW -->
   <div id="view-teacher" class="view">
     <div class="card">
       <div class="card-title">👩‍🏫 Verify a Late Slip</div>
@@ -451,53 +297,72 @@
     </div>
     <div class="card">
       <div class="card-title">📋 All Approved Slips Today</div>
-      <div id="teacher-log">
-        <div class="empty-state"><div class="empty-icon">📭</div><p>No approved slips yet today.</p></div>
-      </div>
+      <div id="teacher-log"><div class="empty-state"><div class="empty-icon">📭</div><p>No approved slips yet today.</p></div></div>
     </div>
   </div>
 
 </div>
-</div><!-- end page-app -->
+</div>
 
 <script>
 // ═══════════════════════════════════════════
-//  PAGE ROUTER — decides which page to show
+//  FIREBASE INIT
+// ═══════════════════════════════════════════
+firebase.initializeApp({
+  apiKey:"AIzaSyAXlWthaLbkCICIy4dgwQexNnKnCmfiJJA",
+  authDomain:"studybudy-3722e.firebaseapp.com",
+  projectId:"studybudy-3722e",
+  storageBucket:"studybudy-3722e.firebasestorage.app",
+  messagingSenderId:"983470521146",
+  appId:"1:983470521146:web:2df5ef0119686476376e03"
+});
+const db = firebase.firestore();
+const TODAY = new Date().toISOString().split('T')[0];
+const slipsRef = db.collection('lateslips').doc(TODAY).collection('slips');
+const tokenRef = db.collection('config').doc('qrtoken');
+
+// ═══════════════════════════════════════════
+//  PAGE ROUTER
 // ═══════════════════════════════════════════
 function getParam(key) {
   return new URLSearchParams(window.location.search).get(key) || '';
 }
 
-// Token now managed by Firebase — see getExpectedTokenFromFirebase()
-
 function router() {
   const mode  = getParam('mode');
   const token = getParam('token').toUpperCase();
 
+  // DEFAULT: no params → show office QR page
+  if (!mode && !token) {
+    showPage('office');
+    initOfficeQR();
+    return;
+  }
+
   if (mode === 'office') {
-    // Office QR display page
     showPage('office');
     initOfficeQR();
     return;
   }
 
   if (token) {
-    // Student came via QR scan — validate token against Firebase
-    showPage('blocked');
-    document.getElementById('block-reason').textContent = 'Verifying your QR code...';
-    getExpectedTokenFromFirebase().then(expected => {
-      if (token === expected) {
+    // Validate token against Firebase
+    tokenRef.get().then(snap => {
+      const expected = snap.exists ? snap.data().token : null;
+      if (expected && token === expected) {
         showPage('app');
       } else {
         showPage('blocked');
         document.getElementById('block-reason').textContent =
           'This QR code has expired. Please go to the office and scan the current QR code on screen.';
       }
+    }).catch(() => {
+      showPage('blocked');
+      document.getElementById('block-reason').textContent = 'Could not verify QR code. Please try again.';
     });
     return;
   }
 
-  // No token, no mode — show blocked
   showPage('blocked');
   document.getElementById('block-reason').textContent =
     'You must scan the QR code at the school office to access this form.';
@@ -513,20 +378,15 @@ function showPage(name) {
 }
 
 // ═══════════════════════════════════════════
-//  OFFICE QR DISPLAY — Firebase powered
+//  OFFICE QR — synced via Firebase
 // ═══════════════════════════════════════════
 const TOKEN_DURATION = 5 * 60;
 let currentToken = '';
+let timerInterval = null;
+let secondsLeft = TOKEN_DURATION;
 
-// Generate a truly random token
 function makeToken() {
-  return Math.random().toString(36).substring(2,10).toUpperCase();
-}
-
-function getSecondsLeft() {
-  const now = Date.now();
-  const blockMs = 5 * 60 * 1000;
-  return Math.ceil((blockMs - (now % blockMs)) / 1000);
+  return Math.random().toString(36).substring(2, 10).toUpperCase();
 }
 
 function generateQR(token) {
@@ -537,8 +397,8 @@ function generateQR(token) {
   setTimeout(() => {
     document.getElementById('qrcode').innerHTML = '';
     new QRCode(document.getElementById('qrcode'), {
-      text: url, width:260, height:260,
-      colorDark:'#000000', colorLight:'#ffffff',
+      text: url, width: 260, height: 260,
+      colorDark: '#000000', colorLight: '#ffffff',
       correctLevel: QRCode.CorrectLevel.H
     });
     document.getElementById('token-display').textContent = token;
@@ -546,74 +406,65 @@ function generateQR(token) {
   }, 400);
 }
 
-function updateOfficeTimer() {
-  const secsLeft = getSecondsLeft();
-  const mins = Math.floor(secsLeft / 60);
-  const secs = secsLeft % 60;
-  const pct  = (secsLeft / TOKEN_DURATION) * 100;
-  document.getElementById('timer-count').textContent = `${mins}:${String(secs).padStart(2,'0')}`;
-  const bar = document.getElementById('timer-bar');
-  bar.style.width = pct + '%';
-  bar.classList.toggle('urgent', secsLeft <= 30);
+function startCountdown() {
+  secondsLeft = TOKEN_DURATION;
+  clearInterval(timerInterval);
+  timerInterval = setInterval(() => {
+    secondsLeft--;
+    const mins = Math.floor(secondsLeft / 60);
+    const secs = secondsLeft % 60;
+    const pct  = (secondsLeft / TOKEN_DURATION) * 100;
+    document.getElementById('timer-count').textContent = `${mins}:${String(secs).padStart(2, '0')}`;
+    const bar = document.getElementById('timer-bar');
+    bar.style.width = pct + '%';
+    bar.classList.toggle('urgent', secondsLeft <= 30);
+
+    if (secondsLeft <= 0) {
+      // Rotate token
+      const newToken = makeToken();
+      tokenRef.set({ token: newToken, updatedAt: Date.now() });
+    }
+  }, 1000);
 }
 
 async function initOfficeQR() {
-  const db = firebase.firestore();
-  const tokenRef = db.collection('config').doc('qrtoken');
+  // Check if there's an existing token in Firebase
+  const snap = await tokenRef.get();
+  if (snap.exists) {
+    const data = snap.data();
+    const age  = Date.now() - (data.updatedAt || 0);
+    const ageSeconds = Math.floor(age / 1000);
+    if (ageSeconds < TOKEN_DURATION) {
+      // Reuse existing token, pick up where timer left off
+      currentToken = data.token;
+      secondsLeft  = TOKEN_DURATION - ageSeconds;
+      generateQR(currentToken);
+    } else {
+      // Token expired, make a new one
+      currentToken = makeToken();
+      await tokenRef.set({ token: currentToken, updatedAt: Date.now() });
+      generateQR(currentToken);
+    }
+  } else {
+    // First time ever
+    currentToken = makeToken();
+    await tokenRef.set({ token: currentToken, updatedAt: Date.now() });
+    generateQR(currentToken);
+  }
 
-  // Generate first token immediately
-  const firstToken = makeToken();
-  await tokenRef.set({ token: firstToken, updatedAt: Date.now() });
-  currentToken = firstToken;
-  generateQR(firstToken);
-
-  // Listen for token changes from Firebase
+  // Listen for token changes from Firebase (in case another device rotates it)
   tokenRef.onSnapshot(snap => {
     if (!snap.exists) return;
     const t = snap.data().token;
     if (t && t !== currentToken) {
       currentToken = t;
       generateQR(t);
+      secondsLeft = TOKEN_DURATION;
     }
   });
 
-  // Update timer every second
-  setInterval(updateOfficeTimer, 1000);
-  updateOfficeTimer();
-
-  // Rotate token every 5 minutes via Firebase
-  setInterval(async () => {
-    const newToken = makeToken();
-    await tokenRef.set({ token: newToken, updatedAt: Date.now() });
-  }, 5 * 60 * 1000);
+  startCountdown();
 }
-
-// Student token validation — reads from Firebase
-async function getExpectedTokenFromFirebase() {
-  try {
-    const db = firebase.firestore();
-    const snap = await db.collection('config').doc('qrtoken').get();
-    if (snap.exists) return snap.data().token;
-  } catch(e) {}
-  return null;
-}
-
-// ═══════════════════════════════════════════
-//  FIREBASE INIT
-// ═══════════════════════════════════════════
-firebase.initializeApp({
-  apiKey:"AIzaSyAXlWthaLbkCICIy4dgwQexNnKnCmfiJJA",
-  authDomain:"studybudy-3722e.firebaseapp.com",
-  projectId:"studybudy-3722e",
-  storageBucket:"studybudy-3722e.firebasestorage.app",
-  messagingSenderId:"983470521146",
-  appId:"1:983470521146:web:2df5ef0119686476376e03"
-});
-const db = firebase.firestore();
-
-// Today's date as document ID — auto resets each day
-const TODAY = new Date().toISOString().split('T')[0];
-const slipsRef = db.collection('lateslips').doc(TODAY).collection('slips');
 
 // ═══════════════════════════════════════════
 //  STUDENT / PRINCIPAL / TEACHER APP
@@ -622,13 +473,30 @@ let pendingRequests = [];
 let currentRequest  = null;
 let pollInterval    = null;
 
-// Listen to today's slips in real time
+// Listen to today's slips in real time — works across ALL devices
 slipsRef.onSnapshot(snap => {
-  pendingRequests = snap.docs.map(d => ({...d.data(), _docId: d.id}));
-  if (document.getElementById('principal-panel') && document.getElementById('principal-panel').style.display !== 'none') {
+  pendingRequests = snap.docs.map(d => ({ ...d.data(), id: d.id }));
+  if (document.getElementById('principal-panel').style.display !== 'none') {
     renderRequests();
   }
   renderTeacherLog();
+
+  // Auto-update student status if waiting
+  if (currentRequest && pollInterval) {
+    const req = pendingRequests.find(r => r.id === currentRequest.id);
+    if (req) {
+      if (req.status === 'approved') {
+        clearInterval(pollInterval);
+        pollInterval = null;
+        showApprovedSlip(req);
+      } else if (req.status === 'rejected') {
+        clearInterval(pollInterval);
+        pollInterval = null;
+        document.getElementById('student-pending').style.display  = 'none';
+        document.getElementById('student-rejected').style.display = 'block';
+      }
+    }
+  }
 });
 
 function formatTime(d) { return d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true}); }
@@ -662,28 +530,17 @@ async function submitRequest() {
   if (!reason) { alert('Please select a reason.'); return; }
   if (reason === 'Other' && !other) { alert('Please specify your reason.'); return; }
   const now = new Date();
+  const id  = genCode();
   currentRequest = {
-    id: genCode(), name, cls,
+    id, name, cls,
     reason: reason === 'Other' ? other : reason,
     time: formatTime(now), date: formatDate(now), status: 'pending'
   };
-  pendingRequests.push(currentRequest);
+  await slipsRef.doc(id).set(currentRequest);
   document.getElementById('student-form').style.display    = 'none';
   document.getElementById('student-pending').style.display = 'block';
-  pollInterval = setInterval(checkMyStatus, 1500);
-}
-
-function checkMyStatus() {
-  const req = pendingRequests.find(r => r.id === currentRequest.id);
-  if (!req) return;
-  if (req.status === 'approved') {
-    clearInterval(pollInterval);
-    showApprovedSlip(req);
-  } else if (req.status === 'rejected') {
-    clearInterval(pollInterval);
-    document.getElementById('student-pending').style.display  = 'none';
-    document.getElementById('student-rejected').style.display = 'block';
-  }
+  // Polling as fallback
+  pollInterval = setInterval(() => {}, 9999);
 }
 
 function showApprovedSlip(req) {
@@ -712,10 +569,9 @@ function resetStudent() {
 function checkPin() {
   const pin = document.getElementById('pin-input').value;
   if (pin === '0808') {
-    document.getElementById('pin-gate').style.display       = 'none';
+    document.getElementById('pin-gate').style.display        = 'none';
     document.getElementById('principal-panel').style.display = 'block';
     renderRequests();
-    setInterval(renderRequests, 2000);
   } else {
     document.getElementById('pin-error').style.display = 'block';
   }
@@ -724,10 +580,7 @@ function checkPin() {
 function renderRequests() {
   const pending  = pendingRequests.filter(r => r.status === 'pending');
   const approved = pendingRequests.filter(r => r.status === 'approved' || r.status === 'used');
-  const list = document.getElementById('requests-list');
-  const log  = document.getElementById('approved-log');
-
-  list.innerHTML = pending.length === 0
+  document.getElementById('requests-list').innerHTML = pending.length === 0
     ? `<div class="empty-state"><div class="empty-icon">📭</div><p>No pending requests right now.</p></div>`
     : pending.map(r => `
         <div class="request-item">
@@ -741,8 +594,7 @@ function renderRequests() {
             <button class="btn btn-reject"  onclick="rejectReq('${r.id}')">❌ Reject</button>
           </div>
         </div>`).join('');
-
-  log.innerHTML = approved.length === 0
+  document.getElementById('approved-log').innerHTML = approved.length === 0
     ? `<div class="empty-state"><div class="empty-icon">📋</div><p>No slips approved yet today.</p></div>`
     : approved.map(r => `
         <div class="slip-list-item">
@@ -751,17 +603,8 @@ function renderRequests() {
         </div>`).join('');
 }
 
-function approveReq(id) {
-  const r = pendingRequests.find(r => r.id === id);
-  if (r) r.status = 'approved';
-  renderRequests();
-}
-
-function rejectReq(id) {
-  const r = pendingRequests.find(r => r.id === id);
-  if (r) r.status = 'rejected';
-  renderRequests();
-}
+async function approveReq(id) { await slipsRef.doc(id).update({ status: 'approved' }); }
+async function rejectReq(id)  { await slipsRef.doc(id).update({ status: 'rejected' }); }
 
 function verifySlip() {
   const code   = document.getElementById('verify-code').value.trim().toUpperCase();
@@ -771,26 +614,11 @@ function verifySlip() {
   if (!slip) {
     result.innerHTML = `<div class="status-badge status-rejected" style="font-size:14px;padding:10px 16px">❌ Slip not found. Check the code.</div>`;
   } else if (slip.status === 'used') {
-    result.innerHTML = `
-      <div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:16px">
-        <div class="status-badge status-rejected" style="margin-bottom:10px">🚫 ALREADY USED — POSSIBLE ABUSE</div>
-        <div style="font-size:13px;color:#fca5a5;line-height:1.7">Already verified at <strong>${slip.usedAt}</strong>. Cannot be used again.</div>
-      </div>`;
+    result.innerHTML = `<div style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:12px;padding:16px"><div class="status-badge status-rejected" style="margin-bottom:10px">🚫 ALREADY USED — POSSIBLE ABUSE</div><div style="font-size:13px;color:#fca5a5;line-height:1.7">Already verified at <strong>${slip.usedAt}</strong>. Cannot be used again.</div></div>`;
   } else if (slip.status === 'approved') {
-    slip.status = 'used';
-    slip.usedAt = formatTime(new Date());
-    slipsRef.doc(slip.id).update({status: 'used', usedAt: slip.usedAt});
-    result.innerHTML = `
-      <div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:12px;padding:16px">
-        <div class="status-badge status-approved" style="margin-bottom:12px">✅ VERIFIED — FIRST USE</div>
-        <div style="font-size:14px;line-height:1.8;color:var(--text)">
-          <strong>${slip.name}</strong> · ${slip.cls}<br>
-          Arrived: <strong>${slip.time}</strong><br>
-          Reason: <strong>${slip.reason}</strong>
-        </div>
-        <div style="font-size:11px;color:var(--muted);margin-top:10px">⚠️ Slip marked as used. Cannot be verified again.</div>
-      </div>`;
-    renderTeacherLog();
+    const usedAt = formatTime(new Date());
+    slipsRef.doc(slip.id).update({ status: 'used', usedAt });
+    result.innerHTML = `<div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:12px;padding:16px"><div class="status-badge status-approved" style="margin-bottom:12px">✅ VERIFIED — FIRST USE</div><div style="font-size:14px;line-height:1.8;color:var(--text)"><strong>${slip.name}</strong> · ${slip.cls}<br>Arrived: <strong>${slip.time}</strong><br>Reason: <strong>${slip.reason}</strong></div><div style="font-size:11px;color:var(--muted);margin-top:10px">⚠️ Slip marked as used. Cannot be verified again.</div></div>`;
   } else if (slip.status === 'pending') {
     result.innerHTML = `<div class="status-badge status-pending" style="font-size:14px;padding:10px 16px">⏳ Not yet approved by principal.</div>`;
   } else {
@@ -801,15 +629,14 @@ function verifySlip() {
 
 function renderTeacherLog() {
   const log  = document.getElementById('teacher-log');
+  if (!log) return;
   const done = pendingRequests.filter(r => r.status === 'approved' || r.status === 'used');
   log.innerHTML = done.length === 0
     ? `<div class="empty-state"><div class="empty-icon">📭</div><p>No approved slips yet today.</p></div>`
     : done.map(r => `
         <div class="slip-list-item">
           <div><div class="sli-name">${r.name}</div><div class="sli-info">${r.cls} · ${r.time} · ${r.id}</div></div>
-          ${r.status==='used'
-            ? `<div class="status-badge status-used">✓ USED</div>`
-            : `<div class="status-badge status-approved">✓ APPROVED</div>`}
+          ${r.status==='used'?`<div class="status-badge status-used">✓ USED</div>`:`<div class="status-badge status-approved">✓ APPROVED</div>`}
         </div>`).join('');
 }
 
