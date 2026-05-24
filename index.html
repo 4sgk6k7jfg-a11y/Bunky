@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Late Pass System</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root {
     --navy: #0a0e1a;
@@ -38,7 +37,6 @@
     pointer-events:none; z-index:0;
   }
 
-  /* ── PAGE SYSTEM ── */
   .page { display:none; }
   .page.active { display:block; }
 
@@ -239,24 +237,45 @@
     border-radius:10px; padding:12px 14px; font-size:13px; color:#93c5fd;
     margin-bottom:16px; line-height:1.5;
   }
-
-  /* ── BLOCKED SCREEN ── */
   .blocked-screen {
     min-height:100vh; display:none;
     flex-direction:column; align-items:center; justify-content:center;
     text-align:center; padding:40px 24px; position:relative; z-index:1;
   }
   .blocked-screen.active { display:flex; }
+  .loading-screen {
+    min-height:100vh; display:flex;
+    flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:40px 24px; position:relative; z-index:1;
+  }
 </style>
+
+<!-- Firebase SDKs — loaded FIRST before any scripts run -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<!-- Firebase init — must happen before anything else -->
+<script>
+  firebase.initializeApp({
+    apiKey: "AIzaSyBKkYUoz-LSJQNy8BruK9R3fen33dCCC_M",
+    authDomain: "late-pass-f8ac9.firebaseapp.com",
+    projectId: "late-pass-f8ac9",
+    storageBucket: "late-pass-f8ac9.firebasestorage.app",
+    messagingSenderId: "778274309148",
+    appId: "1:778274309148:web:92f3f8b391cc6d66008bd9"
+  });
+  const db = firebase.firestore();
+</script>
 </head>
 <body>
 
-<!-- ═══════════════════════════════════════
-     PAGE: OFFICE QR DISPLAY
-     Open this page on the office laptop
-════════════════════════════════════════ -->
+<!-- Loading screen shown while Firebase warms up -->
+<div id="page-loading" class="loading-screen">
+  <div style="width:48px;height:48px;border:3px solid #1e2d45;border-top-color:#f5a623;border-radius:50%;animation:spin 1s linear infinite;margin-bottom:20px"></div>
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:2px;color:#f5a623">LOADING…</div>
+</div>
+
+<!-- OFFICE QR PAGE -->
 <div id="page-office" class="page">
   <div class="office-title">LATE PASS SYSTEM</div>
   <div class="office-sub">Office QR Display — Scan to Submit a Late Slip</div>
@@ -281,25 +300,21 @@
   </div>
 
   <div class="office-note">
-    <strong>📋 For your group:</strong> Keep this page open on the office laptop screen. The QR refreshes automatically every 5 minutes — no action needed. Students who saved an old QR photo will be blocked.
+    <strong>📋 For your group:</strong> Keep this page open on the office laptop screen. The QR refreshes automatically every 5 minutes. Students who saved an old QR photo will be blocked.
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════
-     BLOCKED SCREEN (expired/no token)
-════════════════════════════════════════ -->
+<!-- BLOCKED SCREEN -->
 <div id="page-blocked" class="blocked-screen">
   <div style="font-size:64px;margin-bottom:20px">🚫</div>
-  <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;color:var(--red);margin-bottom:12px">ACCESS DENIED</div>
-  <div id="block-reason" style="font-size:15px;color:var(--muted);max-width:320px;line-height:1.7;margin-bottom:28px"></div>
-  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px;font-size:13px;color:var(--muted);max-width:320px;line-height:1.8;">
-    📍 Go to the <strong style="color:var(--text)">school office entrance</strong> and scan the QR code on the laptop screen.
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;color:#ef4444;margin-bottom:12px">ACCESS DENIED</div>
+  <div id="block-reason" style="font-size:15px;color:#6b7a99;max-width:320px;line-height:1.7;margin-bottom:28px"></div>
+  <div style="background:#161d2e;border:1px solid #1e2d45;border-radius:12px;padding:16px 20px;font-size:13px;color:#6b7a99;max-width:320px;line-height:1.8;">
+    📍 Go to the <strong style="color:#e8eaf0">school office entrance</strong> and scan the QR code on the laptop screen.
   </div>
 </div>
 
-<!-- ═══════════════════════════════════════
-     PAGE: STUDENT / PRINCIPAL / TEACHER APP
-════════════════════════════════════════ -->
+<!-- STUDENT / PRINCIPAL / TEACHER APP -->
 <div id="page-app" class="page">
 <div class="wrap">
 
@@ -317,9 +332,8 @@
     <button class="nav-btn"        onclick="switchView('teacher',this)">👩‍🏫 Teacher</button>
   </div>
 
-  <!-- ── STUDENT VIEW ── -->
+  <!-- STUDENT VIEW -->
   <div id="view-student" class="view active">
-
     <div id="student-form">
       <div class="card">
         <div class="card-title">📋 Late Arrival Form</div>
@@ -390,24 +404,23 @@
           <span class="approved-stamp">✓ APPROVED</span>
         </div>
       </div>
-      <button class="btn btn-primary" onclick="resetStudent()" style="margin-top:14px;background:var(--card);color:var(--text);border:1px solid var(--border)">← New Request</button>
+      <button class="btn btn-primary" onclick="resetStudent()" style="margin-top:14px;background:#161d2e;color:#e8eaf0;border:1px solid #1e2d45">← New Request</button>
     </div>
 
     <div id="student-rejected" style="display:none">
       <div class="card">
         <div class="pending-box">
           <div style="font-size:50px;margin-bottom:16px">❌</div>
-          <h2 style="color:var(--red)">Request Rejected</h2>
+          <h2 style="color:#ef4444">Request Rejected</h2>
           <p>Your request was not approved.<br>Please proceed to the school office.</p>
           <br>
           <button class="btn btn-primary" onclick="resetStudent()" style="max-width:200px;margin:0 auto">Try Again</button>
         </div>
       </div>
     </div>
-
   </div>
 
-  <!-- ── PRINCIPAL VIEW ── -->
+  <!-- PRINCIPAL VIEW -->
   <div id="view-principal" class="view">
     <div id="pin-gate">
       <div class="card">
@@ -416,7 +429,7 @@
           <label>Enter PIN to continue</label>
           <input type="password" id="pin-input" placeholder="Enter 4-digit PIN" maxlength="4">
         </div>
-        <div id="pin-error" style="color:var(--red);font-size:13px;margin-bottom:8px;display:none">❌ Incorrect PIN</div>
+        <div id="pin-error" style="color:#ef4444;font-size:13px;margin-bottom:8px;display:none">❌ Incorrect PIN</div>
         <button class="btn btn-primary" onclick="checkPin()">UNLOCK →</button>
       </div>
     </div>
@@ -437,7 +450,7 @@
     </div>
   </div>
 
-  <!-- ── TEACHER VIEW ── -->
+  <!-- TEACHER VIEW -->
   <div id="view-teacher" class="view">
     <div class="card">
       <div class="card-title">👩‍🏫 Verify a Late Slip</div>
@@ -458,52 +471,34 @@
   </div>
 
 </div>
-</div><!-- end page-app -->
+</div>
 
+<!-- QRCode library loaded async — only needed on office page -->
 <script>
 // ═══════════════════════════════════════════
-//  PAGE ROUTER — decides which page to show
+//  HELPERS
 // ═══════════════════════════════════════════
 function getParam(key) {
   return new URLSearchParams(window.location.search).get(key) || '';
 }
-
-// Token now managed by Firebase — see getExpectedTokenFromFirebase()
-
-function router() {
-  const mode  = getParam('mode');
-  const token = getParam('token').toUpperCase();
-
-  if (mode === 'office') {
-    // Office QR display page
-    showPage('office');
-    initOfficeQR();
-    return;
-  }
-
-  if (token) {
-    // Student came via QR scan — validate token against Firebase
-    showPage('blocked');
-    document.getElementById('block-reason').textContent = 'Verifying your QR code...';
-    getExpectedTokenFromFirebase().then(expected => {
-      if (token === expected) {
-        showPage('app');
-      } else {
-        showPage('blocked');
-        document.getElementById('block-reason').textContent =
-          'This QR code has expired. Please go to the office and scan the current QR code on screen.';
-      }
-    });
-    return;
-  }
-
-  // No token, no mode — show blocked
-  showPage('blocked');
-  document.getElementById('block-reason').textContent =
-    'You must scan the QR code at the school office to access this form.';
+function formatTime(d) {
+  return d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true});
+}
+function formatDate(d) {
+  return d.toLocaleDateString('en-MY',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+}
+function genCode() {
+  return 'LP-'+new Date().getFullYear()+'-'+Math.random().toString(36).substring(2,6).toUpperCase();
+}
+function makeToken() {
+  return Math.random().toString(36).substring(2,10).toUpperCase();
 }
 
+// ═══════════════════════════════════════════
+//  PAGE ROUTER
+// ═══════════════════════════════════════════
 function showPage(name) {
+  document.getElementById('page-loading').style.display = 'none';
   document.getElementById('page-office').classList.remove('active');
   document.getElementById('page-blocked').classList.remove('active');
   document.getElementById('page-app').classList.remove('active');
@@ -512,22 +507,63 @@ function showPage(name) {
   if (name === 'app')     document.getElementById('page-app').classList.add('active');
 }
 
-// ═══════════════════════════════════════════
-//  OFFICE QR DISPLAY — Firebase powered
-// ═══════════════════════════════════════════
-const TOKEN_DURATION = 5 * 60;
-let currentToken = '';
+async function router() {
+  const mode  = getParam('mode');
+  const token = getParam('token').toUpperCase();
 
-// Generate a truly random token
-function makeToken() {
-  return Math.random().toString(36).substring(2,10).toUpperCase();
+  if (mode === 'office') {
+    // Load QRCode library then start office mode
+    await loadQRLib();
+    showPage('office');
+    initOfficeQR();
+    return;
+  }
+
+  if (token) {
+    // Validate token against Firebase
+    try {
+      const snap = await db.collection('config').doc('qrtoken').get();
+      const expected = snap.exists ? snap.data().token : null;
+      if (token === expected) {
+        showPage('app');
+        initStudentApp();
+      } else {
+        showPage('blocked');
+        document.getElementById('block-reason').textContent =
+          'This QR code has expired. Please go to the office and scan the current QR code on the screen.';
+      }
+    } catch(e) {
+      showPage('blocked');
+      document.getElementById('block-reason').textContent =
+        'Unable to verify QR code. Please check your connection and try again.';
+    }
+    return;
+  }
+
+  // No token, no mode
+  showPage('blocked');
+  document.getElementById('block-reason').textContent =
+    'You must scan the QR code at the school office to access this form.';
 }
 
-function getSecondsLeft() {
-  const now = Date.now();
-  const blockMs = 5 * 60 * 1000;
-  return Math.ceil((blockMs - (now % blockMs)) / 1000);
+// Dynamically load QRCode.js only when needed (office page)
+function loadQRLib() {
+  return new Promise((resolve, reject) => {
+    if (window.QRCode) { resolve(); return; }
+    const s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js';
+    s.onload = resolve;
+    s.onerror = reject;
+    document.head.appendChild(s);
+  });
 }
+
+// ═══════════════════════════════════════════
+//  OFFICE QR — Firebase powered
+// ═══════════════════════════════════════════
+const TOKEN_DURATION = 5 * 60; // seconds
+let officeToken = '';
+let tokenExpiresAt = 0; // unix ms when current token expires
 
 function generateQR(token) {
   const base = window.location.href.split('?')[0];
@@ -547,7 +583,8 @@ function generateQR(token) {
 }
 
 function updateOfficeTimer() {
-  const secsLeft = getSecondsLeft();
+  const now = Date.now();
+  const secsLeft = Math.max(0, Math.ceil((tokenExpiresAt - now) / 1000));
   const mins = Math.floor(secsLeft / 60);
   const secs = secsLeft % 60;
   const pct  = (secsLeft / TOKEN_DURATION) * 100;
@@ -557,92 +594,89 @@ function updateOfficeTimer() {
   bar.classList.toggle('urgent', secsLeft <= 30);
 }
 
+async function issueNewToken() {
+  const newToken = makeToken();
+  const expiresAt = Date.now() + TOKEN_DURATION * 1000;
+  await db.collection('config').doc('qrtoken').set({
+    token: newToken,
+    expiresAt: expiresAt,
+    updatedAt: Date.now()
+  });
+  // Local state updated via onSnapshot listener below
+}
+
 async function initOfficeQR() {
-  const db = firebase.firestore();
   const tokenRef = db.collection('config').doc('qrtoken');
 
-  // Generate first token immediately
-  const firstToken = makeToken();
-  await tokenRef.set({ token: firstToken, updatedAt: Date.now() });
-  currentToken = firstToken;
-  generateQR(firstToken);
-
-  // Listen for token changes from Firebase
+  // Listen for token changes in real time (works across devices)
   tokenRef.onSnapshot(snap => {
     if (!snap.exists) return;
-    const t = snap.data().token;
-    if (t && t !== currentToken) {
-      currentToken = t;
-      generateQR(t);
+    const data = snap.data();
+    if (data.token && data.token !== officeToken) {
+      officeToken = data.token;
+      tokenExpiresAt = data.expiresAt || (Date.now() + TOKEN_DURATION * 1000);
+      generateQR(officeToken);
     }
   });
 
-  // Update timer every second
+  // Check if existing token is still valid, otherwise issue new one
+  const snap = await tokenRef.get();
+  if (snap.exists) {
+    const data = snap.data();
+    const stillValid = data.expiresAt && Date.now() < data.expiresAt;
+    if (stillValid) {
+      officeToken = data.token;
+      tokenExpiresAt = data.expiresAt;
+      generateQR(officeToken);
+    } else {
+      await issueNewToken();
+    }
+  } else {
+    await issueNewToken();
+  }
+
+  // Update the visual timer every second
   setInterval(updateOfficeTimer, 1000);
   updateOfficeTimer();
 
-  // Rotate token every 5 minutes via Firebase
+  // Rotate token when it expires — checks every 5 seconds to handle tab sleep
   setInterval(async () => {
-    const newToken = makeToken();
-    await tokenRef.set({ token: newToken, updatedAt: Date.now() });
-  }, 5 * 60 * 1000);
+    if (Date.now() >= tokenExpiresAt) {
+      await issueNewToken();
+    }
+  }, 5000);
 }
-
-// Student token validation — reads from Firebase
-async function getExpectedTokenFromFirebase() {
-  try {
-    const db = firebase.firestore();
-    const snap = await db.collection('config').doc('qrtoken').get();
-    if (snap.exists) return snap.data().token;
-  } catch(e) {}
-  return null;
-}
-
-// ═══════════════════════════════════════════
-//  FIREBASE INIT (YOUR NEW DATABASE)
-// ═══════════════════════════════════════════
-firebase.initializeApp({
-  apiKey: "AIzaSyBKkYUoz-LSJQNy8BruK9R3fen33dCCC_M",
-  authDomain: "late-pass-f8ac9.firebaseapp.com",
-  projectId: "late-pass-f8ac9",
-  storageBucket: "late-pass-f8ac9.firebasestorage.app",
-  messagingSenderId: "778274309148",
-  appId: "1:778274309148:web:92f3f8b391cc6d66008bd9"
-});
-const db = firebase.firestore();
-
-// Today's date as document ID — auto resets each day
-const TODAY = new Date().toISOString().split('T')[0];
-const slipsRef = db.collection('lateslips').doc(TODAY).collection('slips');
 
 // ═══════════════════════════════════════════
 //  STUDENT / PRINCIPAL / TEACHER APP
 // ═══════════════════════════════════════════
+const TODAY = new Date().toISOString().split('T')[0];
+let slipsRef;
 let pendingRequests = [];
 let currentRequest  = null;
 let pollInterval    = null;
 
-// Listen to today's slips in real time
-slipsRef.onSnapshot(snap => {
-  pendingRequests = snap.docs.map(d => ({...d.data(), _docId: d.id}));
-  if (document.getElementById('principal-panel') && document.getElementById('principal-panel').style.display !== 'none') {
-    renderRequests();
-  }
-  renderTeacherLog();
-});
+function initStudentApp() {
+  slipsRef = db.collection('lateslips').doc(TODAY).collection('slips');
 
-function formatTime(d) { return d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true}); }
-function formatDate(d) { return d.toLocaleDateString('en-MY',{weekday:'long',year:'numeric',month:'long',day:'numeric'}); }
-function genCode()     { return 'LP-'+new Date().getFullYear()+'-'+Math.random().toString(36).substring(2,6).toUpperCase(); }
+  // Real-time listener for all slips today — shared across all devices
+  slipsRef.onSnapshot(snap => {
+    pendingRequests = snap.docs.map(d => ({...d.data(), _docId: d.id}));
+    const panel = document.getElementById('principal-panel');
+    if (panel && panel.style.display !== 'none') renderRequests();
+    renderTeacherLog();
+  });
 
-setInterval(() => {
-  const el = document.getElementById('live-time');
-  if (el) el.textContent = formatTime(new Date());
-}, 1000);
+  // Live clock
+  setInterval(() => {
+    const el = document.getElementById('live-time');
+    if (el) el.textContent = formatTime(new Date());
+  }, 1000);
 
-document.getElementById('s-reason').addEventListener('change', function() {
-  document.getElementById('other-field').style.display = this.value === 'Other' ? 'block' : 'none';
-});
+  document.getElementById('s-reason').addEventListener('change', function() {
+    document.getElementById('other-field').style.display = this.value === 'Other' ? 'block' : 'none';
+  });
+}
 
 function switchView(v, btn) {
   document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
@@ -661,22 +695,23 @@ async function submitRequest() {
   if (!cls)    { alert('Please enter your class (e.g. 10A).'); return; }
   if (!reason) { alert('Please select a reason.'); return; }
   if (reason === 'Other' && !other) { alert('Please specify your reason.'); return; }
+
   const now = new Date();
   currentRequest = {
     id: genCode(), name, cls,
     reason: reason === 'Other' ? other : reason,
     time: formatTime(now), date: formatDate(now), status: 'pending'
   };
-  // Save to Firebase so principal can see it
   await slipsRef.doc(currentRequest.id).set(currentRequest);
   document.getElementById('student-form').style.display    = 'none';
   document.getElementById('student-pending').style.display = 'block';
+
+  // Poll for status changes
   pollInterval = setInterval(checkMyStatus, 1500);
 }
 
 function checkMyStatus() {
   if (!currentRequest) return;
-  // Check Firebase directly for real-time status
   slipsRef.doc(currentRequest.id).get().then(snap => {
     if (!snap.exists) return;
     const req = snap.data();
@@ -708,19 +743,18 @@ function resetStudent() {
   document.getElementById('student-pending').style.display  = 'none';
   document.getElementById('student-approved').style.display = 'none';
   document.getElementById('student-rejected').style.display = 'none';
-  document.getElementById('s-name').value = '';
-  document.getElementById('s-class').value = '';
-  document.getElementById('s-reason').value = '';
-  document.getElementById('s-other').value = '';
+  document.getElementById('s-name').value    = '';
+  document.getElementById('s-class').value   = '';
+  document.getElementById('s-reason').value  = '';
+  document.getElementById('s-other').value   = '';
 }
 
 function checkPin() {
   const pin = document.getElementById('pin-input').value;
   if (pin === '0808') {
-    document.getElementById('pin-gate').style.display       = 'none';
+    document.getElementById('pin-gate').style.display        = 'none';
     document.getElementById('principal-panel').style.display = 'block';
     renderRequests();
-    setInterval(renderRequests, 2000);
   } else {
     document.getElementById('pin-error').style.display = 'block';
   }
@@ -731,6 +765,7 @@ function renderRequests() {
   const approved = pendingRequests.filter(r => r.status === 'approved' || r.status === 'used');
   const list = document.getElementById('requests-list');
   const log  = document.getElementById('approved-log');
+  if (!list || !log) return;
 
   list.innerHTML = pending.length === 0
     ? `<div class="empty-state"><div class="empty-icon">📭</div><p>No pending requests right now.</p></div>`
@@ -759,7 +794,6 @@ function renderRequests() {
 async function approveReq(id) {
   await slipsRef.doc(id).update({status: 'approved'});
 }
-
 async function rejectReq(id) {
   await slipsRef.doc(id).update({status: 'rejected'});
 }
@@ -778,20 +812,18 @@ function verifySlip() {
         <div style="font-size:13px;color:#fca5a5;line-height:1.7">Already verified at <strong>${slip.usedAt}</strong>. Cannot be used again.</div>
       </div>`;
   } else if (slip.status === 'approved') {
-    slip.status = 'used';
-    slip.usedAt = formatTime(new Date());
-    slipsRef.doc(slip.id).update({status: 'used', usedAt: slip.usedAt});
+    const usedAt = formatTime(new Date());
+    slipsRef.doc(slip.id).update({status: 'used', usedAt});
     result.innerHTML = `
       <div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:12px;padding:16px">
         <div class="status-badge status-approved" style="margin-bottom:12px">✅ VERIFIED — FIRST USE</div>
-        <div style="font-size:14px;line-height:1.8;color:var(--text)">
+        <div style="font-size:14px;line-height:1.8;color:#e8eaf0">
           <strong>${slip.name}</strong> · ${slip.cls}<br>
           Arrived: <strong>${slip.time}</strong><br>
           Reason: <strong>${slip.reason}</strong>
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-top:10px">⚠️ Slip marked as used. Cannot be verified again.</div>
+        <div style="font-size:11px;color:#6b7a99;margin-top:10px">⚠️ Slip marked as used. Cannot be verified again.</div>
       </div>`;
-    renderTeacherLog();
   } else if (slip.status === 'pending') {
     result.innerHTML = `<div class="status-badge status-pending" style="font-size:14px;padding:10px 16px">⏳ Not yet approved by principal.</div>`;
   } else {
@@ -802,6 +834,7 @@ function verifySlip() {
 
 function renderTeacherLog() {
   const log  = document.getElementById('teacher-log');
+  if (!log) return;
   const done = pendingRequests.filter(r => r.status === 'approved' || r.status === 'used');
   log.innerHTML = done.length === 0
     ? `<div class="empty-state"><div class="empty-icon">📭</div><p>No approved slips yet today.</p></div>`
@@ -814,7 +847,7 @@ function renderTeacherLog() {
         </div>`).join('');
 }
 
-// ── INIT ──
+// ── START ──
 router();
 </script>
 </body>
