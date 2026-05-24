@@ -649,7 +649,7 @@ async function submitRequest() {
   await slipsRef.doc(id).set(currentRequest);
   document.getElementById('student-form').style.display    = 'none';
   document.getElementById('student-pending').style.display = 'block';
-  pollInterval = setInterval(() => {}, 9999);
+  // Status updates handled automatically by Firebase onSnapshot above
 }
 
 function checkMyStatus() {
@@ -694,7 +694,6 @@ function checkPin() {
     document.getElementById('pin-gate').style.display        = 'none';
     document.getElementById('principal-panel').style.display = 'block';
     renderRequests();
-    setInterval(renderRequests, 2000);
   } else {
     document.getElementById('pin-error').style.display = 'block';
   }
