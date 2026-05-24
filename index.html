@@ -6,8 +6,6 @@
 <title>Late Pass System</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <style>
   :root {
     --navy: #0a0e1a;
@@ -40,221 +38,224 @@
     pointer-events:none; z-index:0;
   }
 
-/* ── PAGE SYSTEM ── */
-.page { display:none; }
-.page.active { display:block; }
+  /* ── PAGE SYSTEM ── */
+  .page { display:none; }
+  .page.active { display:block; }
 
-/* ── OFFICE QR PAGE ── */
-#page-office {
-min-height:100vh;
-display:none;
-flex-direction:column;
-align-items:center;
-justify-content:center;
-text-align:center;
-padding:40px 20px;
-position:relative; z-index:1;
-}
-#page-office.active { display:flex; }
-.office-title {
-font-family:'Bebas Neue',sans-serif;
-font-size:42px; letter-spacing:3px;
-color:var(--accent); line-height:1; margin-bottom:4px;
-}
-.office-sub {
-font-size:13px; color:var(--muted);
-letter-spacing:2px; text-transform:uppercase; margin-bottom:40px;
-}
-.qr-wrapper {
-background:#fff; border-radius:20px; padding:24px;
-display:inline-block;
-box-shadow: 0 0 60px rgba(245,166,35,0.15);
-margin-bottom:28px; transition:opacity .4s;
-}
-.qr-wrapper.refreshing { opacity:0.3; }
-.office-instruction {
-font-family:'Bebas Neue',sans-serif;
-font-size:28px; letter-spacing:2px; margin-bottom:8px;
-}
-.office-sub2 { font-size:14px; color:var(--muted); margin-bottom:28px; }
-.timer-row {
-display:flex; align-items:center; justify-content:center;
-gap:12px; margin-bottom:12px;
-}
-.timer-label { font-size:13px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
-.timer-bar-wrap { width:200px; height:6px; background:var(--border); border-radius:10px; overflow:hidden; }
-.timer-bar { height:100%; background:var(--accent); border-radius:10px; transition:width 1s linear, background 1s; }
-.timer-bar.urgent { background:var(--red); }
-.timer-count { font-family:'DM Mono',monospace; font-size:13px; color:var(--accent); min-width:32px; text-align:right; }
-.token-badge {
-display:inline-flex; align-items:center; gap:8px;
-background:var(--card); border:1px solid var(--border);
-border-radius:10px; padding:8px 16px;
-font-family:'DM Mono',monospace; font-size:13px; color:var(--muted);
-margin-bottom:24px;
-}
-.token-dot { width:7px; height:7px; background:var(--green); border-radius:50%; animation:pulse 1.5s infinite; }
-.office-note {
-background:var(--card); border:1px solid var(--border);
-border-radius:12px; padding:16px 24px;
-font-size:12px; color:var(--muted); max-width:420px;
-line-height:1.8; text-align:left;
-}
-.office-note strong { color:var(--accent); }
+  /* ── OFFICE QR PAGE ── */
+  #page-office {
+    min-height:100vh;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:40px 20px;
+    position:relative; z-index:1;
+  }
+  #page-office.active { display:flex; }
+  .office-title {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:42px; letter-spacing:3px;
+    color:var(--accent); line-height:1; margin-bottom:4px;
+  }
+  .office-sub {
+    font-size:13px; color:var(--muted);
+    letter-spacing:2px; text-transform:uppercase; margin-bottom:40px;
+  }
+  .qr-wrapper {
+    background:#fff; border-radius:20px; padding:24px;
+    display:inline-block;
+    box-shadow: 0 0 60px rgba(245,166,35,0.15);
+    margin-bottom:28px; transition:opacity .4s;
+  }
+  .qr-wrapper.refreshing { opacity:0.3; }
+  .office-instruction {
+    font-family:'Bebas Neue',sans-serif;
+    font-size:28px; letter-spacing:2px; margin-bottom:8px;
+  }
+  .office-sub2 { font-size:14px; color:var(--muted); margin-bottom:28px; }
+  .timer-row {
+    display:flex; align-items:center; justify-content:center;
+    gap:12px; margin-bottom:12px;
+  }
+  .timer-label { font-size:13px; color:var(--muted); letter-spacing:1px; text-transform:uppercase; }
+  .timer-bar-wrap { width:200px; height:6px; background:var(--border); border-radius:10px; overflow:hidden; }
+  .timer-bar { height:100%; background:var(--accent); border-radius:10px; transition:width 1s linear, background 1s; }
+  .timer-bar.urgent { background:var(--red); }
+  .timer-count { font-family:'DM Mono',monospace; font-size:13px; color:var(--accent); min-width:32px; text-align:right; }
+  .token-badge {
+    display:inline-flex; align-items:center; gap:8px;
+    background:var(--card); border:1px solid var(--border);
+    border-radius:10px; padding:8px 16px;
+    font-family:'DM Mono',monospace; font-size:13px; color:var(--muted);
+    margin-bottom:24px;
+  }
+  .token-dot { width:7px; height:7px; background:var(--green); border-radius:50%; animation:pulse 1.5s infinite; }
+  .office-note {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:12px; padding:16px 24px;
+    font-size:12px; color:var(--muted); max-width:420px;
+    line-height:1.8; text-align:left;
+  }
+  .office-note strong { color:var(--accent); }
 
-/* ── STUDENT / MAIN APP ── */
-.wrap {
-position:relative; z-index:1;
-max-width:520px; margin:0 auto; padding:24px 16px 60px;
-}
-.nav {
-display:flex; gap:8px; margin-bottom:32px;
-background:var(--card); border:1px solid var(--border);
-border-radius:12px; padding:6px;
-}
-.nav-btn {
-flex:1; padding:10px; border:none; border-radius:8px;
-font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600;
-cursor:pointer; transition:all .2s;
-background:transparent; color:var(--muted); letter-spacing:.3px;
-}
-.nav-btn.active { background:var(--accent); color:var(--navy); }
-.school-badge { display:flex; align-items:center; gap:14px; margin-bottom:28px; }
-.badge-icon {
-width:52px; height:52px; background:var(--accent);
-border-radius:14px; display:flex; align-items:center; justify-content:center;
-font-size:24px; flex-shrink:0;
-}
-.badge-text h1 {
-font-family:'Bebas Neue',sans-serif; font-size:26px;
-letter-spacing:1.5px; color:var(--white); line-height:1;
-}
-.badge-text p { font-size:12px; color:var(--muted); margin-top:3px; letter-spacing:.5px; }
-.view { display:none; animation:fadeUp .35s ease; }
-.view.active { display:block; }
-@keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
-.card {
-background:var(--card); border:1px solid var(--border);
-border-radius:16px; padding:24px; margin-bottom:16px;
-}
-.card-title {
-font-family:'Bebas Neue',sans-serif; font-size:18px;
-letter-spacing:1px; color:var(--accent); margin-bottom:18px;
-display:flex; align-items:center; gap:8px;
-}
-.field { margin-bottom:16px; }
-label {
-display:block; font-size:11px; font-weight:600;
-letter-spacing:1px; text-transform:uppercase;
-color:var(--muted); margin-bottom:7px;
-}
-input, select, textarea {
-width:100%; background:var(--navy2); border:1px solid var(--border);
-border-radius:10px; padding:12px 14px; color:var(--text);
-font-family:'DM Sans',sans-serif; font-size:15px;
-outline:none; transition:border-color .2s;
-}
-input:focus, select:focus, textarea:focus { border-color:var(--accent); }
-select option { background:var(--navy2); }
-.time-display {
-background:var(--navy2); border:1px solid var(--border);
-border-radius:10px; padding:12px 14px;
-font-family:'DM Mono',monospace; font-size:15px; color:var(--accent);
-display:flex; align-items:center; gap:8px;
-}
-.time-dot { width:8px; height:8px; background:var(--green); border-radius:50%; animation:pulse 1.5s infinite; }
-.btn {
-width:100%; padding:14px; border:none; border-radius:12px;
-font-family:'Bebas Neue',sans-serif; font-size:18px;
-letter-spacing:1.5px; cursor:pointer; transition:all .2s; margin-top:8px;
-}
-.btn-primary { background:var(--accent); color:var(--navy); }
-.btn-primary:hover { background:var(--accent2); transform:translateY(-1px); }
-.btn-approve { background:var(--green); color:var(--white); width:auto; padding:10px 20px; font-size:14px; border-radius:8px; margin-top:0; }
-.btn-reject  { background:var(--red);   color:var(--white); width:auto; padding:10px 20px; font-size:14px; border-radius:8px; margin-top:0; }
-.btn-print   { background:var(--blue);  color:var(--white); }
-.btn-print:hover { background:#2563eb; transform:translateY(-1px); }
-.status-badge {
-display:inline-flex; align-items:center; gap:6px;
-padding:5px 12px; border-radius:20px;
-font-size:12px; font-weight:600; letter-spacing:.5px;
-}
-.status-pending  { background:rgba(245,166,35,.15); color:var(--accent); border:1px solid rgba(245,166,35,.3); }
-.status-approved { background:rgba(34,197,94,.15);  color:var(--green);  border:1px solid rgba(34,197,94,.3); }
-.status-rejected { background:rgba(239,68,68,.15);  color:var(--red);    border:1px solid rgba(239,68,68,.3); }
-.status-used     { background:rgba(107,122,153,.15); color:var(--muted); border:1px solid rgba(107,122,153,.3); }
-.pending-box { text-align:center; padding:40px 24px; }
-.spinner {
-width:56px; height:56px; border:3px solid var(--border);
-border-top-color:var(--accent); border-radius:50%;
-animation:spin 1s linear infinite; margin:0 auto 20px;
-}
-@keyframes spin { to{transform:rotate(360deg)} }
-.pending-box h2 { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:1px; margin-bottom:8px; }
-.pending-box p  { font-size:14px; color:var(--muted); }
-.slip {
-background:#fff; color:#111; border-radius:12px;
-padding:28px; position:relative; overflow:hidden;
-}
-.slip::before {
-content:'APPROVED'; position:absolute; top:50%; left:50%;
-transform:translate(-50%,-50%) rotate(-25deg);
-font-family:'Bebas Neue',sans-serif; font-size:80px;
-color:rgba(34,197,94,.08); letter-spacing:4px;
-white-space:nowrap; pointer-events:none;
-}
-.slip-header { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #111; padding-bottom:14px; margin-bottom:16px; }
-.slip-school { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1px; color:#111; }
-.slip-title  { font-size:11px; color:#666; letter-spacing:1px; text-transform:uppercase; margin-top:2px; }
-.slip-code   { font-family:'DM Mono',monospace; font-size:11px; background:#f0f0f0; padding:4px 8px; border-radius:4px; color:#444; }
-.slip-row    { display:flex; justify-content:space-between; margin-bottom:10px; font-size:13px; }
-.slip-row .s-label { color:#888; font-weight:500; }
-.slip-row .s-val   { font-weight:600; color:#111; text-align:right; max-width:60%; }
-.slip-footer { border-top:1px dashed #ccc; margin-top:16px; padding-top:12px; display:flex; justify-content:space-between; align-items:center; font-size:11px; color:#888; }
-.approved-stamp { background:var(--green); color:white; font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:1px; padding:4px 10px; border-radius:4px; }
-.request-item { background:var(--navy2); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:12px; }
-.req-top  { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
-.req-name { font-weight:600; font-size:15px; color:var(--white); }
-.req-class{ font-size:12px; color:var(--muted); margin-top:2px; }
-.req-details { font-size:13px; color:var(--muted); margin-bottom:14px; line-height:1.6; }
-.req-details span { color:var(--text); font-weight:500; }
-.req-actions { display:flex; gap:8px; }
-.empty-state { text-align:center; padding:40px 20px; color:var(--muted); }
-.empty-state .empty-icon { font-size:40px; margin-bottom:12px; }
-.empty-state p { font-size:14px; }
-.search-box { position:relative; margin-bottom:16px; }
-.search-box input { padding-left:40px; }
-.search-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:16px; }
-.slip-list-item {
-background:var(--navy2); border:1px solid var(--border);
-border-radius:12px; padding:14px 16px; margin-bottom:10px;
-display:flex; justify-content:space-between; align-items:center;
-cursor:pointer; transition:border-color .2s;
-}
-.slip-list-item:hover { border-color:var(--accent); }
-.sli-name { font-weight:600; font-size:14px; }
-.sli-info { font-size:12px; color:var(--muted); margin-top:2px; }
-.divider { height:1px; background:var(--border); margin:20px 0; }
-.info-note {
-background:rgba(59,130,246,.1); border:1px solid rgba(59,130,246,.25);
-border-radius:10px; padding:12px 14px; font-size:13px; color:#93c5fd;
-margin-bottom:16px; line-height:1.5;
-}
+  /* ── STUDENT / MAIN APP ── */
+  .wrap {
+    position:relative; z-index:1;
+    max-width:520px; margin:0 auto; padding:24px 16px 60px;
+  }
+  .nav {
+    display:flex; gap:8px; margin-bottom:32px;
+    background:var(--card); border:1px solid var(--border);
+    border-radius:12px; padding:6px;
+  }
+  .nav-btn {
+    flex:1; padding:10px; border:none; border-radius:8px;
+    font-family:'DM Sans',sans-serif; font-size:13px; font-weight:600;
+    cursor:pointer; transition:all .2s;
+    background:transparent; color:var(--muted); letter-spacing:.3px;
+  }
+  .nav-btn.active { background:var(--accent); color:var(--navy); }
+  .school-badge { display:flex; align-items:center; gap:14px; margin-bottom:28px; }
+  .badge-icon {
+    width:52px; height:52px; background:var(--accent);
+    border-radius:14px; display:flex; align-items:center; justify-content:center;
+    font-size:24px; flex-shrink:0;
+  }
+  .badge-text h1 {
+    font-family:'Bebas Neue',sans-serif; font-size:26px;
+    letter-spacing:1.5px; color:var(--white); line-height:1;
+  }
+  .badge-text p { font-size:12px; color:var(--muted); margin-top:3px; letter-spacing:.5px; }
+  .view { display:none; animation:fadeUp .35s ease; }
+  .view.active { display:block; }
+  @keyframes fadeUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .card {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:16px; padding:24px; margin-bottom:16px;
+  }
+  .card-title {
+    font-family:'Bebas Neue',sans-serif; font-size:18px;
+    letter-spacing:1px; color:var(--accent); margin-bottom:18px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .field { margin-bottom:16px; }
+  label {
+    display:block; font-size:11px; font-weight:600;
+    letter-spacing:1px; text-transform:uppercase;
+    color:var(--muted); margin-bottom:7px;
+  }
+  input, select, textarea {
+    width:100%; background:var(--navy2); border:1px solid var(--border);
+    border-radius:10px; padding:12px 14px; color:var(--text);
+    font-family:'DM Sans',sans-serif; font-size:15px;
+    outline:none; transition:border-color .2s;
+  }
+  input:focus, select:focus, textarea:focus { border-color:var(--accent); }
+  select option { background:var(--navy2); }
+  .time-display {
+    background:var(--navy2); border:1px solid var(--border);
+    border-radius:10px; padding:12px 14px;
+    font-family:'DM Mono',monospace; font-size:15px; color:var(--accent);
+    display:flex; align-items:center; gap:8px;
+  }
+  .time-dot { width:8px; height:8px; background:var(--green); border-radius:50%; animation:pulse 1.5s infinite; }
+  .btn {
+    width:100%; padding:14px; border:none; border-radius:12px;
+    font-family:'Bebas Neue',sans-serif; font-size:18px;
+    letter-spacing:1.5px; cursor:pointer; transition:all .2s; margin-top:8px;
+  }
+  .btn-primary { background:var(--accent); color:var(--navy); }
+  .btn-primary:hover { background:var(--accent2); transform:translateY(-1px); }
+  .btn-approve { background:var(--green); color:var(--white); width:auto; padding:10px 20px; font-size:14px; border-radius:8px; margin-top:0; }
+  .btn-reject  { background:var(--red);   color:var(--white); width:auto; padding:10px 20px; font-size:14px; border-radius:8px; margin-top:0; }
+  .btn-print   { background:var(--blue);  color:var(--white); }
+  .btn-print:hover { background:#2563eb; transform:translateY(-1px); }
+  .status-badge {
+    display:inline-flex; align-items:center; gap:6px;
+    padding:5px 12px; border-radius:20px;
+    font-size:12px; font-weight:600; letter-spacing:.5px;
+  }
+  .status-pending  { background:rgba(245,166,35,.15); color:var(--accent); border:1px solid rgba(245,166,35,.3); }
+  .status-approved { background:rgba(34,197,94,.15);  color:var(--green);  border:1px solid rgba(34,197,94,.3); }
+  .status-rejected { background:rgba(239,68,68,.15);  color:var(--red);    border:1px solid rgba(239,68,68,.3); }
+  .status-used     { background:rgba(107,122,153,.15); color:var(--muted); border:1px solid rgba(107,122,153,.3); }
+  .pending-box { text-align:center; padding:40px 24px; }
+  .spinner {
+    width:56px; height:56px; border:3px solid var(--border);
+    border-top-color:var(--accent); border-radius:50%;
+    animation:spin 1s linear infinite; margin:0 auto 20px;
+  }
+  @keyframes spin { to{transform:rotate(360deg)} }
+  .pending-box h2 { font-family:'Bebas Neue',sans-serif; font-size:22px; letter-spacing:1px; margin-bottom:8px; }
+  .pending-box p  { font-size:14px; color:var(--muted); }
+  .slip {
+    background:#fff; color:#111; border-radius:12px;
+    padding:28px; position:relative; overflow:hidden;
+  }
+  .slip::before {
+    content:'APPROVED'; position:absolute; top:50%; left:50%;
+    transform:translate(-50%,-50%) rotate(-25deg);
+    font-family:'Bebas Neue',sans-serif; font-size:80px;
+    color:rgba(34,197,94,.08); letter-spacing:4px;
+    white-space:nowrap; pointer-events:none;
+  }
+  .slip-header { display:flex; justify-content:space-between; align-items:flex-start; border-bottom:2px solid #111; padding-bottom:14px; margin-bottom:16px; }
+  .slip-school { font-family:'Bebas Neue',sans-serif; font-size:20px; letter-spacing:1px; color:#111; }
+  .slip-title  { font-size:11px; color:#666; letter-spacing:1px; text-transform:uppercase; margin-top:2px; }
+  .slip-code   { font-family:'DM Mono',monospace; font-size:11px; background:#f0f0f0; padding:4px 8px; border-radius:4px; color:#444; }
+  .slip-row    { display:flex; justify-content:space-between; margin-bottom:10px; font-size:13px; }
+  .slip-row .s-label { color:#888; font-weight:500; }
+  .slip-row .s-val   { font-weight:600; color:#111; text-align:right; max-width:60%; }
+  .slip-footer { border-top:1px dashed #ccc; margin-top:16px; padding-top:12px; display:flex; justify-content:space-between; align-items:center; font-size:11px; color:#888; }
+  .approved-stamp { background:var(--green); color:white; font-family:'Bebas Neue',sans-serif; font-size:13px; letter-spacing:1px; padding:4px 10px; border-radius:4px; }
+  .request-item { background:var(--navy2); border:1px solid var(--border); border-radius:12px; padding:16px; margin-bottom:12px; }
+  .req-top  { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
+  .req-name { font-weight:600; font-size:15px; color:var(--white); }
+  .req-class{ font-size:12px; color:var(--muted); margin-top:2px; }
+  .req-details { font-size:13px; color:var(--muted); margin-bottom:14px; line-height:1.6; }
+  .req-details span { color:var(--text); font-weight:500; }
+  .req-actions { display:flex; gap:8px; }
+  .empty-state { text-align:center; padding:40px 20px; color:var(--muted); }
+  .empty-state .empty-icon { font-size:40px; margin-bottom:12px; }
+  .empty-state p { font-size:14px; }
+  .search-box { position:relative; margin-bottom:16px; }
+  .search-box input { padding-left:40px; }
+  .search-icon { position:absolute; left:14px; top:50%; transform:translateY(-50%); color:var(--muted); font-size:16px; }
+  .slip-list-item {
+    background:var(--navy2); border:1px solid var(--border);
+    border-radius:12px; padding:14px 16px; margin-bottom:10px;
+    display:flex; justify-content:space-between; align-items:center;
+    cursor:pointer; transition:border-color .2s;
+  }
+  .slip-list-item:hover { border-color:var(--accent); }
+  .sli-name { font-weight:600; font-size:14px; }
+  .sli-info { font-size:12px; color:var(--muted); margin-top:2px; }
+  .divider { height:1px; background:var(--border); margin:20px 0; }
+  .info-note {
+    background:rgba(59,130,246,.1); border:1px solid rgba(59,130,246,.25);
+    border-radius:10px; padding:12px 14px; font-size:13px; color:#93c5fd;
+    margin-bottom:16px; line-height:1.5;
+  }
 
-/* ── BLOCKED SCREEN ── */
-.blocked-screen {
-min-height:100vh; display:none;
-flex-direction:column; align-items:center; justify-content:center;
-text-align:center; padding:40px 24px; position:relative; z-index:1;
-}
-.blocked-screen.active { display:flex; }
+  /* ── BLOCKED SCREEN ── */
+  .blocked-screen {
+    min-height:100vh; display:none;
+    flex-direction:column; align-items:center; justify-content:center;
+    text-align:center; padding:40px 24px; position:relative; z-index:1;
+  }
+  .blocked-screen.active { display:flex; }
 </style>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
 <!-- ═══════════════════════════════════════
      PAGE: OFFICE QR DISPLAY
+     Open this page on the office laptop
 ════════════════════════════════════════ -->
 <div id="page-office" class="page">
   <div class="office-title">LATE PASS SYSTEM</div>
@@ -285,7 +286,7 @@ text-align:center; padding:40px 24px; position:relative; z-index:1;
 </div>
 
 <!-- ═══════════════════════════════════════
-     BLOCKED SCREEN
+     BLOCKED SCREEN (expired/no token)
 ════════════════════════════════════════ -->
 <div id="page-blocked" class="blocked-screen">
   <div style="font-size:64px;margin-bottom:20px">🚫</div>
@@ -457,59 +458,46 @@ text-align:center; padding:40px 24px; position:relative; z-index:1;
   </div>
 
 </div>
-</div>
+</div><!-- end page-app -->
 
 <script>
 // ═══════════════════════════════════════════
-//  FIREBASE INIT — only used for slip syncing
-// ═══════════════════════════════════════════
-firebase.initializeApp({
-  apiKey:"AIzaSyAXlWthaLbkCICIy4dgwQexNnKnCmfiJJA",
-  authDomain:"studybudy-3722e.firebaseapp.com",
-  projectId:"studybudy-3722e",
-  storageBucket:"studybudy-3722e.firebasestorage.app",
-  messagingSenderId:"983470521146",
-  appId:"1:983470521146:web:2df5ef0119686476376e03"
-});
-const db = firebase.firestore();
-const TODAY = new Date().toISOString().split('T')[0];
-const slipsRef = db.collection('lateslips').doc(TODAY).collection('slips');
-
-// ═══════════════════════════════════════════
-//  PAGE ROUTER — exactly as original
+//  PAGE ROUTER — decides which page to show
 // ═══════════════════════════════════════════
 function getParam(key) {
   return new URLSearchParams(window.location.search).get(key) || '';
 }
 
-function getExpectedToken() {
-  const now     = new Date();
-  const win5    = Math.floor((now.getHours() * 60 + now.getMinutes()) / 5);
-  const dateStr = `${now.getFullYear()}${now.getMonth()}${now.getDate()}`;
-  return btoa(`${dateStr}-${win5}`).replace(/=/g,'').substring(0,8).toUpperCase();
-}
+// Token now managed by Firebase — see getExpectedTokenFromFirebase()
 
 function router() {
   const mode  = getParam('mode');
   const token = getParam('token').toUpperCase();
 
   if (mode === 'office') {
+    // Office QR display page
     showPage('office');
     initOfficeQR();
     return;
   }
 
   if (token) {
-    if (token === getExpectedToken()) {
-      showPage('app');
-    } else {
-      showPage('blocked');
-      document.getElementById('block-reason').textContent =
-        'This QR code has expired. Please go to the office and scan the current QR code on screen.';
-    }
+    // Student came via QR scan — validate token against Firebase
+    showPage('blocked');
+    document.getElementById('block-reason').textContent = 'Verifying your QR code...';
+    getExpectedTokenFromFirebase().then(expected => {
+      if (token === expected) {
+        showPage('app');
+      } else {
+        showPage('blocked');
+        document.getElementById('block-reason').textContent =
+          'This QR code has expired. Please go to the office and scan the current QR code on screen.';
+      }
+    });
     return;
   }
 
+  // No token, no mode — show blocked
   showPage('blocked');
   document.getElementById('block-reason').textContent =
     'You must scan the QR code at the school office to access this form.';
@@ -525,31 +513,25 @@ function showPage(name) {
 }
 
 // ═══════════════════════════════════════════
-//  OFFICE QR DISPLAY — exactly as original
+//  OFFICE QR DISPLAY — Firebase powered
 // ═══════════════════════════════════════════
 const TOKEN_DURATION = 5 * 60;
 let currentToken = '';
 
-function getOfficeToken() {
-  return getExpectedToken();
+// Generate a truly random token
+function makeToken() {
+  return Math.random().toString(36).substring(2,10).toUpperCase();
 }
 
 function getSecondsLeft() {
-  const now  = new Date();
-  const secs = now.getMinutes() * 60 + now.getSeconds();
-  return TOKEN_DURATION - (secs % TOKEN_DURATION);
-}
-
-function initOfficeQR() {
-  currentToken = getOfficeToken();
-  generateQR(currentToken);
-  setInterval(updateOfficeTimer, 1000);
-  updateOfficeTimer();
+  const now = Date.now();
+  const blockMs = 5 * 60 * 1000;
+  return Math.ceil((blockMs - (now % blockMs)) / 1000);
 }
 
 function generateQR(token) {
-  const base    = window.location.href.split('?')[0];
-  const url     = `${base}?token=${token}`;
+  const base = window.location.href.split('?')[0];
+  const url  = `${base}?token=${token}`;
   const wrapper = document.getElementById('qr-wrapper');
   wrapper.classList.add('refreshing');
   setTimeout(() => {
@@ -566,47 +548,87 @@ function generateQR(token) {
 
 function updateOfficeTimer() {
   const secsLeft = getSecondsLeft();
-  const token    = getOfficeToken();
-  const mins     = Math.floor(secsLeft / 60);
-  const secs     = secsLeft % 60;
-  const pct      = (secsLeft / TOKEN_DURATION) * 100;
+  const mins = Math.floor(secsLeft / 60);
+  const secs = secsLeft % 60;
+  const pct  = (secsLeft / TOKEN_DURATION) * 100;
   document.getElementById('timer-count').textContent = `${mins}:${String(secs).padStart(2,'0')}`;
   const bar = document.getElementById('timer-bar');
   bar.style.width = pct + '%';
   bar.classList.toggle('urgent', secsLeft <= 30);
-  if (token !== currentToken) {
-    currentToken = token;
-    generateQR(token);
-  }
+}
+
+async function initOfficeQR() {
+  const db = firebase.firestore();
+  const tokenRef = db.collection('config').doc('qrtoken');
+
+  // Generate first token immediately
+  const firstToken = makeToken();
+  await tokenRef.set({ token: firstToken, updatedAt: Date.now() });
+  currentToken = firstToken;
+  generateQR(firstToken);
+
+  // Listen for token changes from Firebase
+  tokenRef.onSnapshot(snap => {
+    if (!snap.exists) return;
+    const t = snap.data().token;
+    if (t && t !== currentToken) {
+      currentToken = t;
+      generateQR(t);
+    }
+  });
+
+  // Update timer every second
+  setInterval(updateOfficeTimer, 1000);
+  updateOfficeTimer();
+
+  // Rotate token every 5 minutes via Firebase
+  setInterval(async () => {
+    const newToken = makeToken();
+    await tokenRef.set({ token: newToken, updatedAt: Date.now() });
+  }, 5 * 60 * 1000);
+}
+
+// Student token validation — reads from Firebase
+async function getExpectedTokenFromFirebase() {
+  try {
+    const db = firebase.firestore();
+    const snap = await db.collection('config').doc('qrtoken').get();
+    if (snap.exists) return snap.data().token;
+  } catch(e) {}
+  return null;
 }
 
 // ═══════════════════════════════════════════
-//  STUDENT / PRINCIPAL / TEACHER
-//  Only change: pendingRequests now syncs via Firebase
+//  FIREBASE INIT
+// ═══════════════════════════════════════════
+firebase.initializeApp({
+  apiKey:"AIzaSyAXlWthaLbkCICIy4dgwQexNnKnCmfiJJA",
+  authDomain:"studybudy-3722e.firebaseapp.com",
+  projectId:"studybudy-3722e",
+  storageBucket:"studybudy-3722e.firebasestorage.app",
+  messagingSenderId:"983470521146",
+  appId:"1:983470521146:web:2df5ef0119686476376e03"
+});
+const db = firebase.firestore();
+
+// Today's date as document ID — auto resets each day
+const TODAY = new Date().toISOString().split('T')[0];
+const slipsRef = db.collection('lateslips').doc(TODAY).collection('slips');
+
+// ═══════════════════════════════════════════
+//  STUDENT / PRINCIPAL / TEACHER APP
 // ═══════════════════════════════════════════
 let pendingRequests = [];
 let currentRequest  = null;
 let pollInterval    = null;
 
-// Real-time listener — this is the ONLY change from original
+// Listen to today's slips in real time
 slipsRef.onSnapshot(snap => {
-  pendingRequests = snap.docs.map(d => ({ ...d.data(), id: d.id }));
-  if (document.getElementById('principal-panel').style.display !== 'none') {
+  pendingRequests = snap.docs.map(d => ({...d.data(), _docId: d.id}));
+  if (document.getElementById('principal-panel') && document.getElementById('principal-panel').style.display !== 'none') {
     renderRequests();
   }
   renderTeacherLog();
-  // Auto-update student if waiting
-  if (currentRequest) {
-    const req = pendingRequests.find(r => r.id === currentRequest.id);
-    if (req && req.status === 'approved') {
-      clearInterval(pollInterval);
-      showApprovedSlip(req);
-    } else if (req && req.status === 'rejected') {
-      clearInterval(pollInterval);
-      document.getElementById('student-pending').style.display  = 'none';
-      document.getElementById('student-rejected').style.display = 'block';
-    }
-  }
 });
 
 function formatTime(d) { return d.toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit',hour12:true}); }
@@ -640,29 +662,33 @@ async function submitRequest() {
   if (!reason) { alert('Please select a reason.'); return; }
   if (reason === 'Other' && !other) { alert('Please specify your reason.'); return; }
   const now = new Date();
-  const id  = genCode();
   currentRequest = {
-    id, name, cls,
+    id: genCode(), name, cls,
     reason: reason === 'Other' ? other : reason,
     time: formatTime(now), date: formatDate(now), status: 'pending'
   };
-  await slipsRef.doc(id).set(currentRequest);
+  // Save to Firebase so principal can see it
+  await slipsRef.doc(currentRequest.id).set(currentRequest);
   document.getElementById('student-form').style.display    = 'none';
   document.getElementById('student-pending').style.display = 'block';
-  // Status updates handled automatically by Firebase onSnapshot above
+  pollInterval = setInterval(checkMyStatus, 1500);
 }
 
 function checkMyStatus() {
-  const req = pendingRequests.find(r => r.id === currentRequest.id);
-  if (!req) return;
-  if (req.status === 'approved') {
-    clearInterval(pollInterval);
-    showApprovedSlip(req);
-  } else if (req.status === 'rejected') {
-    clearInterval(pollInterval);
-    document.getElementById('student-pending').style.display  = 'none';
-    document.getElementById('student-rejected').style.display = 'block';
-  }
+  if (!currentRequest) return;
+  // Check Firebase directly for real-time status
+  slipsRef.doc(currentRequest.id).get().then(snap => {
+    if (!snap.exists) return;
+    const req = snap.data();
+    if (req.status === 'approved') {
+      clearInterval(pollInterval);
+      showApprovedSlip({...req, id: snap.id});
+    } else if (req.status === 'rejected') {
+      clearInterval(pollInterval);
+      document.getElementById('student-pending').style.display  = 'none';
+      document.getElementById('student-rejected').style.display = 'block';
+    }
+  });
 }
 
 function showApprovedSlip(req) {
@@ -691,9 +717,10 @@ function resetStudent() {
 function checkPin() {
   const pin = document.getElementById('pin-input').value;
   if (pin === '0808') {
-    document.getElementById('pin-gate').style.display        = 'none';
+    document.getElementById('pin-gate').style.display       = 'none';
     document.getElementById('principal-panel').style.display = 'block';
     renderRequests();
+    setInterval(renderRequests, 2000);
   } else {
     document.getElementById('pin-error').style.display = 'block';
   }
@@ -729,8 +756,13 @@ function renderRequests() {
         </div>`).join('');
 }
 
-async function approveReq(id) { await slipsRef.doc(id).update({ status: 'approved' }); }
-async function rejectReq(id)  { await slipsRef.doc(id).update({ status: 'rejected' }); }
+async function approveReq(id) {
+  await slipsRef.doc(id).update({status: 'approved'});
+}
+
+async function rejectReq(id) {
+  await slipsRef.doc(id).update({status: 'rejected'});
+}
 
 function verifySlip() {
   const code   = document.getElementById('verify-code').value.trim().toUpperCase();
@@ -748,7 +780,7 @@ function verifySlip() {
   } else if (slip.status === 'approved') {
     slip.status = 'used';
     slip.usedAt = formatTime(new Date());
-    slipsRef.doc(slip.id).update({ status: 'used', usedAt: slip.usedAt });
+    slipsRef.doc(slip.id).update({status: 'used', usedAt: slip.usedAt});
     result.innerHTML = `
       <div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:12px;padding:16px">
         <div class="status-badge status-approved" style="margin-bottom:12px">✅ VERIFIED — FIRST USE</div>
@@ -770,7 +802,6 @@ function verifySlip() {
 
 function renderTeacherLog() {
   const log  = document.getElementById('teacher-log');
-  if (!log) return;
   const done = pendingRequests.filter(r => r.status === 'approved' || r.status === 'used');
   log.innerHTML = done.length === 0
     ? `<div class="empty-state"><div class="empty-icon">📭</div><p>No approved slips yet today.</p></div>`
